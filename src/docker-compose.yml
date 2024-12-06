@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports: 
+      - 1337:1337
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - 8080:8080
+  # db:
+  #   image: mongo@latest
+  #   restart: always
+  #   container_name: mongodb
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: meow
+
+
+networks:
+  dark-molecule-network:
+    

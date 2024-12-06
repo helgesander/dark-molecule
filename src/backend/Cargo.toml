@@ -1,0 +1,12 @@
+[package]
+name = "dark-molecule-backend"
+version = "0.1.0"
+author = "helgesander"
+edition = "2024"
+
+[dependencies]
+actix-web = "4"
+mongodb = "2.1"
+bson = { version = "2", features = ["chrono-0_4"] } # Needed for using chrono datetime in doc
+chrono = "0.4" # Used for setting DateTimes
+serde = "1" # Used in the Map Data into Structs section
