@@ -1,26 +1,17 @@
-use actix_web::{error, get, post, web::{self, scope}, App, Error, HttpResponse, HttpServer, Responder};
-// use crate::
-
+use actix_web::{web, App, HttpServer, Responder};
 
 mod handlers;
 mod routes;
-
-async fn get_projects() -> impl Responder {
-    HttpResponse::Ok().body("In develop")
-    // TODO: implement get projects
-}
+mod models;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let json_conf = web::JsonConfig::default()
+    let _json_conf = web::JsonConfig::default()
         .limit(4096);
-        // .error_handler(|err, req| {
-        //     error::InternalError::from_response(err, HttpResponse::Conflict().into().into())
-        // });
     HttpServer::new(|| {
         App::new()
-            .app_data(json_conf)
-            .configure()
+            // .app_data(json_conf)
+            .configure(routes::init_routes)
     })
     .bind(("0.0.0.0", 1337))?
     .run()
