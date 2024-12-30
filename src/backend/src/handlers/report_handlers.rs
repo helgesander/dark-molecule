@@ -8,7 +8,7 @@ pub async fn create_report_handler(req: HttpRequest) -> impl Responder {
     // TODO: implement report creation
 }
 
-#[get("/{uuid}")]
+#[get("/{id}")]
 pub async fn get_report_handler(path: web::Path<Uuid>) -> impl Responder {
     HttpResponse::Ok()
     // TODO: implement get report

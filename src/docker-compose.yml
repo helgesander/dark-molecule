@@ -3,21 +3,25 @@ services:
     build:
       context: ./backend
     ports: 
-      - 1337:1337
+      - "1337:1337"
+    depends_on:
+      - db
+      - frontend
   frontend:
     build:
       context: ./frontend
     ports:
-      - 8080:8080
-  # db:
-  #   image: mongo@latest
-  #   restart: always
-  #   container_name: mongodb
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: root
-  #     MONGO_INITDB_ROOT_PASSWORD: meow
+      - "8080:8080"
+  db:
+    image: mongo
+    restart: always
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: meow
+      MONGO_INITDB_DATABASE: dark_molecule_db
 
-
+  # TODO: fix mongodb init
 networks:
   dark-molecule-network:
     

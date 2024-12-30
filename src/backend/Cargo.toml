@@ -10,3 +10,7 @@ bson = { version = "2", features = ["chrono-0_4"] } # Needed for using chrono da
 chrono = "0.4" # Used for setting DateTimes
 serde = "1" # Used in the Map Data into Structs section
 uuid = { version = "1.11.0" , features = ["v4", "fast-rng", "macro-diagnostics", ]}
+derive_more = "0.99.18"
+serde_json = "1.0.133"
+log = "0.4.22"
+dotenv = "0.15.0"
