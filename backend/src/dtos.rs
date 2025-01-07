@@ -1,4 +1,6 @@
+use chrono::NaiveDate;
 use diesel::prelude::*;
+use diesel::sql_types::Date;
 use crate::db::schema;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -19,8 +21,8 @@ pub struct UserForm<'a> {
 pub struct ProjectForm<'a> {
     name: &'a str,
     description: Option<&'a str>,
-    start_date: Option<&'a str>,
-    end_date: Option<&'a str>,
+    start_date: Option<NaiveDate>,
+    end_date: Option<NaiveDate>,
     folder: &'a str,
     team_id: Uuid
 }
