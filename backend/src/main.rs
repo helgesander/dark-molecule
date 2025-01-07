@@ -4,14 +4,12 @@ use actix_web::{App, HttpServer, Responder};
 use actix_web::middleware::Logger;
 use env_logger::Env;
 
-use log::info;
-
 mod handlers;
 mod routes;
 mod models;
-mod dto;
 mod utils;
 mod db;
+mod dtos;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
