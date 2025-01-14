@@ -13,12 +13,11 @@ pub async fn get_user_handler(path: web::Path<String>) -> impl Responder {
 #[post("/")]
 pub async fn create_user_handler() -> actix_web::Result<HttpResponse, AppError> {
     todo!();
-    // TODO: implement user creation in postgres
 }
 
 #[get("/")]
 pub async fn get_users_handler() -> impl Responder {
-    HttpResponse::Ok().body("Getting all user, just wait...")
-    // TODO: implement getting all users
+    todo!();
+    HttpResponse::Ok().body("Getting user, just wait...")
 }
 

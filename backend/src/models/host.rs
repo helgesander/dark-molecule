@@ -16,12 +16,3 @@ pub struct Host {
     pub ip_address: String,
     pub project_id: Uuid
 }
-
-// #[derive(Insertable)]
-// #[diesel(table_name = hosts)]
-// #[diesel(check_for_backend(diesel::pg::Pg))]
-// pub struct NewHost {
-//     pub hostname: String,
-//     pub ip_address: String,
-//     pub project_id: Uuid
-// }

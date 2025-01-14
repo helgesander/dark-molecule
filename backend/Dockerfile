@@ -14,6 +14,6 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
-COPY --from=builder /app/target/release/dark-molecule-backend /usr/local/bin/app
+COPY --from=builder /app/target/release/backend /usr/local/bin/backend
 USER daemon
 ENTRYPOINT ["/usr/local/bin/app"]

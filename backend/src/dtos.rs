@@ -1,19 +1,18 @@
 use chrono::NaiveDate;
 use diesel::prelude::*;
-use diesel::sql_types::Date;
 use crate::db::schema;
 use serde::Deserialize;
 use uuid::Uuid;
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable, Deserialize, AsChangeset, Debug)]
 #[diesel(table_name = schema::users)]
 pub struct UserForm<'a> {
-    first_name: Option<&'a str>,
-    last_name: Option<&'a str>,
-    username: &'a str,
-    email: &'a str,
-    password: &'a str,
-    is_admin: bool // WARNING! SECURITY RISK!!!
+    pub first_name: Option<&'a str>,
+    pub last_name: Option<&'a str>,
+    pub username: &'a str,
+    pub email: &'a str,
+    pub password: &'a str,
+    pub is_admin: bool // WARNING! SECURITY RISK!!!
 }
 
 #[derive(Insertable, Deserialize)]

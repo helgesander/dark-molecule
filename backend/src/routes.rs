@@ -1,5 +1,5 @@
 use actix_web::web;
-use crate::handlers::{user_handlers, project_handlers, report_handlers, error_handlers};
+use crate::handlers::{user_handlers, project_handlers};
 
 fn init_project_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -10,13 +10,13 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
     );
 }
 
-fn init_report_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/reports")
-        .service(report_handlers::create_report_handler)
-        .service(report_handlers::get_report_handler)
-    );
-}
+// fn init_report_routes(cfg: &mut web::ServiceConfig) {
+//     cfg.service(
+//         web::scope("/reports")
+//         .service(report_handlers::create_report_handler)
+//         .service(report_handlers::get_report_handler)
+//     );
+// }
 
 fn init_user_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -32,6 +32,6 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
         web::scope("/api")
             .configure(init_user_routes)
             .configure(init_project_routes)
-            .configure(init_report_routes)
+            // .configure(init_report_routes)
     );
 }
