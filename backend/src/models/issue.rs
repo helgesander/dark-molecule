@@ -1,6 +1,5 @@
 use uuid::Uuid;
 use crate::db::schema::issues;
-use crate::models::project::Project;
 use diesel::prelude::*;
 #[derive(Queryable, Selectable, Identifiable)]
 #[diesel(table_name = issues)]

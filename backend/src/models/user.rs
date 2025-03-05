@@ -3,10 +3,11 @@ use uuid::Uuid;
 use crate::db::schema::users;
 use diesel::prelude::*;
 use chrono::NaiveDate;
+use diesel::r2d2::PooledConnection;
 use log::debug;
 use crate::db::schema::users::dsl::*;
 use crate::db::schema::users::id;
-use crate::dtos::UserForm;
+use crate::dtos::db::UserForm;
 
 #[derive(Queryable, Selectable, Identifiable, Debug)]
 #[diesel(table_name = users)]

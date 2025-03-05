@@ -2,18 +2,19 @@ services:
   backend:
     build:
       context: ./backend
+    container_name: dark-molecule-backend
     ports: 
-      - "${BACKEND_PORT}:8080"
+      - "8000:8080"
     environment:
-      DB_NAME:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
       - db
-      - frontend
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "${FRONTEND_PORT}:8080"
+#      - frontend
+#  frontend:
+#    build:
+#      context: ./frontend
+#    ports:
+#      - "${FRONTEND_PORT}:8080"
   db:
     image: postgres:17.2
     restart: unless-stopped
@@ -24,7 +25,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "${POSTGRES_PORT}"
+      - "5442:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql/data/pgdata
     deploy:
