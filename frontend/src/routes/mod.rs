@@ -1,5 +1,9 @@
 use yew_router::prelude::*;
 use yew::prelude::*;
+use crate::pages::main::MainPage;
+use crate::pages::login::LoginPage;
+use crate::pages::not_found::NotFoundPage;
+use crate::pages::register::RegisterPage;
 
 mod admin;
 mod profile;
@@ -24,17 +28,21 @@ pub enum MainRoute {
     #[at("/profile")]
     Profile,
     #[at("/")]
-    MainPage
+    MainPage,
+    #[at("/404")]
+    #[not_found]
+    NotFound
 }
 
 pub fn switch_main(route: MainRoute) -> Html {
     match route {
         MainRoute::Projects => html! { <h1>{ "Projects" }</h1> },
         MainRoute::ProjectRoot | MainRoute::Project => html! { <Switch<project::ProjectRoute> render={ project::switch_project }/>},
-        MainRoute::Login => html! {<h1>{"Login Page"}</h1>},
-        MainRoute::Register => html! {<h1>{"Register Page"}</h1>},
+        MainRoute::Login => html! {<LoginPage />},
+        MainRoute::Register => html! {<RegisterPage />},
         MainRoute::Admin | MainRoute::AdminRoot => html! { <Switch<admin::AdminRoute> render={ admin::switch_admin }/> },
         MainRoute::Profile => html! {<h1>{"Profile Page"}</h1>},
-        MainRoute::MainPage => html! {<h1> {"Main Page"} </h1>}
+        MainRoute::MainPage => html! {<MainPage />},
+        MainRoute::NotFound => html! {<NotFoundPage />}
     }
 }
