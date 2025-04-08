@@ -18,6 +18,10 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
 //     );
 // }
 
+fn init_auth_routes(cfg: &mut web::ServiceConfig) {
+    todo!()
+}
+
 fn init_user_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/users")

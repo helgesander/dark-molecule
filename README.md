@@ -19,3 +19,10 @@ Without docker:
 - [ ] Add authentication (JWT maybe...)
 - [ ] Change synchronous postgres client to asynchronous
 - [ ] Fix https
+
+
+
+- [] Сделать валидацию введения данных пользователя
+- [] Сделать так, чтобы при возвращении Bad Request возвращалась причина
+- [] Добавить функцию валидации, что юзернейм, почта уникальны
+

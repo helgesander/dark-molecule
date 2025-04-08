@@ -4,9 +4,10 @@ services:
       context: ./backend
     container_name: dark-molecule-backend
     ports: 
-      - "8000:8080"
+      - "${BACKEND_PORT}:8080"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PORT: ${BACKEND_PORT}
     depends_on:
       - db
 #      - frontend
@@ -15,6 +16,9 @@ services:
 #      context: ./frontend
 #    ports:
 #      - "${FRONTEND_PORT}:8080"
+#  nginx:
+#    image: nginx:latest
+#    restart: unless-stopped
   db:
     image: postgres:17.2
     restart: unless-stopped

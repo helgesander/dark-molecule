@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use crate::db::schema::users;
 use diesel::prelude::*;
@@ -8,8 +8,9 @@ use log::debug;
 use crate::db::schema::users::dsl::*;
 use crate::db::schema::users::id;
 use crate::dtos::db::UserForm;
+use crate::utils::hash_password;
 
-#[derive(Queryable, Selectable, Identifiable, Debug)]
+#[derive(Queryable, Selectable, Identifiable, Debug, Serialize)]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(primary_key(id))]
@@ -35,8 +36,20 @@ impl User {
             .optional()
     }
 
+    // TODO: maybe change arg type of size to i64
+    pub fn get_users(conn: &mut PgConnection, size: usize) -> QueryResult<Vec<User>> {
+        debug!("Get {} users", size);
+        users
+            .select(User::as_select())
+            .limit(size as i64)
+            .order(created_at.asc())
+            .load(conn)
+    }
+
     pub fn create_user(conn: &mut PgConnection, form: &UserForm) -> QueryResult<User> {
         debug!("Create user with data: {:?}", form);
+        let password_hash = hash_password(&form.password)
+            .map_err(|e| diesel::result::Error::DeserializationError(Box::new(e)))?;
         diesel::insert_into(users::table)
             .values(form)
             .get_result::<User>(conn)
@@ -49,7 +62,7 @@ impl User {
             .execute(conn)
     }
 
-pub fn delete_user(conn: &mut PgConnection, user_id: Uuid) -> QueryResult<usize> {
+    pub fn delete_user(conn: &mut PgConnection, user_id: Uuid) -> QueryResult<usize> {
         debug!("Delete user with id {}", user_id);
         diesel::delete(users.filter(id.eq(user_id))).execute(conn)
     }
