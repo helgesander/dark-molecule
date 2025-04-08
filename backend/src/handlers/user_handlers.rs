@@ -90,9 +90,34 @@ pub async fn change_user_handler(
 // TODO: fix that only admin can delete user
 #[delete("/{id}")]
 pub async fn delete_user_handler(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>
+    path: web::Path<String>,
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<HttpResponse, AppError> {
-    todo!()
+    let uuid = path.into_inner()
+        .parse::<Uuid>()
+        .map_err(|e| {
+            error!("Invalid UUID format: {}", e);
+            AppError::BadRequest
+        })?;
+    let deleted_user = web::block( move || {
+        let mut conn = pool.get().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::InternalServerError
+        })?; // TODO: fix this shit...
+        debug!("Try to delete user with id {}", uuid);
+        User::delete_user(&mut conn, uuid)
+        .map_err(|e| {
+            error!("Database query error: {}", e);
+            AppError::DatabaseError
+        })
+    })
+        .await
+        .map_err(|e| {
+            error!("Async block error: {}", e);
+            AppError::InternalServerError
+        })??;
+    // TODO: fix response from server
+    Ok(HttpResponse::Ok().json(deleted_user))
 }
 
 #[get("/")]

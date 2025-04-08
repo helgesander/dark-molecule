@@ -48,8 +48,6 @@ impl User {
 
     pub fn create_user(conn: &mut PgConnection, form: &UserForm) -> QueryResult<User> {
         debug!("Create user with data: {:?}", form);
-        let password_hash = hash_password(&form.password)
-            .map_err(|e| diesel::result::Error::DeserializationError(Box::new(e)))?;
         diesel::insert_into(users::table)
             .values(form)
             .get_result::<User>(conn)
@@ -63,8 +61,13 @@ impl User {
     }
 
     pub fn delete_user(conn: &mut PgConnection, user_id: Uuid) -> QueryResult<usize> {
-        debug!("Delete user with id {}", user_id);
-        diesel::delete(users.filter(id.eq(user_id))).execute(conn)
+        conn.transaction(|conn| {
+            let count = diesel::delete(users::table.filter(users::id.eq(user_id)))
+                .execute(conn)?;
+
+            debug!("Deleted {} rows (before commit)", count);
+            Ok(count)
+        })
     }
 }
 

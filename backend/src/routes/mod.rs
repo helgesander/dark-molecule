@@ -27,6 +27,7 @@ fn init_user_routes(cfg: &mut web::ServiceConfig) {
         web::scope("/users")
             .service(user_handlers::create_user_handler)
             .service(user_handlers::get_users_handler)
+            .service(user_handlers::delete_user_handler)
             .service(user_handlers::get_user_handler)
     );
 }
