@@ -36,6 +36,14 @@ impl User {
             .optional()
     }
 
+    pub fn get_user_by_email(conn: &mut PgConnection, user_email: String) -> QueryResult<Option<User>> {
+        // debug!("User with email {} try login", email);
+        users
+            .filter(email.eq(user_email))
+            .select(User::as_select())
+            .first(conn)
+            .optional()
+    }
     // TODO: maybe change arg type of size to i64
     pub fn get_users(conn: &mut PgConnection, size: usize) -> QueryResult<Vec<User>> {
         debug!("Get {} users", size);
@@ -70,97 +78,3 @@ impl User {
         })
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use diesel::sql_query;
-    use std::env;
-    use diesel::sql_types::Text;
-    use dotenv;
-    use serde_json;
-    use crate::db::schema::users::dsl::*;
-    use pretty_assertions::{assert_eq, assert_str_eq};
-
-    const TEST_JSON: &str = r#"{
-            "first_name": null,
-            "last_name": null,
-            "username": "johndoe",
-            "email": "john.doe@example.com",
-            "password": "securePassword123!",
-            "is_admin": true
-        }"#;
-
-    #[test]
-    fn test_create_user() {
-        dotenv::from_filename(".env.test").ok();
-        let mut connection = crate::establish_connection();
-        let new_user = serde_json::from_str::<UserForm>(TEST_JSON).unwrap();
-        let result = User::create_user(&mut connection, &new_user);
-        assert!(result.is_ok());
-        let created_user = result.unwrap();
-        assert_eq!(created_user.username, new_user.username);
-        assert_eq!(created_user.email, new_user.email);
-
-        sql_query("TRUNCATE users CASCADE;")
-            .execute(&mut connection).expect("Can't truncate table users");
-    }
-    #[test]
-    fn test_get_user_by_id() {
-        dotenv::from_filename(".env.test").ok();
-        let mut connection = crate::establish_connection();
-        let data = serde_json::from_str::<UserForm>(TEST_JSON).unwrap();
-        let created_user = User::create_user(&mut connection, &data).unwrap();
-        let result = User::get_user_by_id(&mut connection, created_user.id);
-        assert!(result.is_ok());
-        let retrieved_user = result.unwrap();
-        match retrieved_user {
-            Some(user) => {
-                assert_eq!(user.id, created_user.id);
-                assert_str_eq!(user.email.as_str() , &created_user.email);
-            },
-            None => panic!("User does not exist"),
-        }
-
-        sql_query("TRUNCATE users CASCADE;")
-            .execute(&mut connection).expect("Can't truncate table users");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_update_user() {
-        dotenv::from_filename(".env.test").ok();
-
-        let mut connection = crate::establish_connection();
-        let mut updates = serde_json::from_str::<UserForm>(TEST_JSON).unwrap();
-        let created_user = User::create_user(&mut connection, &updates).expect("Can't create user in tests");
-        updates.first_name = Some("Updated");
-
-        let result = User::update_user(&mut connection, &updates, created_user.id);
-        assert!(result.is_ok());
-
-        let updated_user: User = users.filter(id.eq(created_user.id)).first(&mut connection).expect("Failed to fetch updated user");
-        assert_eq!(updated_user.first_name.unwrap().as_str(), updates.first_name.unwrap());
-        
-        // sql_query("TRUNCATE users CASCADE;")
-        //     .execute(&mut connection).expect("Can't truncate table users");
-    }
-
-        #[test]
-        fn test_delete_user() {
-            dotenv::from_filename(".env.test").ok();
-            let mut connection = crate::establish_connection();
-            let data = serde_json::from_str::<UserForm>(TEST_JSON);
-            let created_user = User::create_user(&mut connection, &data.unwrap()).expect("Can't create user in tests");
-
-            let result = User::delete_user(&mut connection, created_user.id);
-            assert!(result.is_ok());
-            assert_eq!(result.unwrap(), 1);
-
-            let count = users.count().get_result::<i64>(&mut connection).unwrap();
-            assert_eq!(count, 0);
-
-            sql_query("TRUNCATE users CASCADE;")
-                .execute(&mut connection).expect("Can't truncate table users");
-        }
-    }

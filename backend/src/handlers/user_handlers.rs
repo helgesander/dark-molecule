@@ -1,13 +1,13 @@
 use actix_web::{get, post, put, delete, web, HttpResponse, Responder};
 use uuid::Uuid;
-use diesel::{PgConnection, QueryResult};
-use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use diesel::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool};
 use log::{error, debug};
 use crate::dtos::db::UserForm;
 use crate::models::user::User;
-use crate::utils::{AppError, hash_password, Pagination};
+use crate::utils::{hash_password, Pagination};
+use crate::utils::errors::AppError;
 use crate::dtos::handlers::UserData;
-use diesel::r2d2::Error::ConnectionError;
 use validator::Validate;
 
 #[get("/{id}")]
@@ -79,6 +79,7 @@ pub async fn create_user_handler(
     Ok(HttpResponse::Created().json(created_user))
 }
 
+// TODO: fix put change_user_handler
 #[put("/{id}")]
 pub async fn change_user_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -137,11 +138,7 @@ pub async fn get_users_handler(
                 AppError::DatabaseError
             })
     })
-        .await
-        .map_err(|e| {
-            error!("Async block error: {}", e);
-            AppError::InternalServerError
-        })??;
+        .await??;
 
     Ok(HttpResponse::Ok().json(users))
 }

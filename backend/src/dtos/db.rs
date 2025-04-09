@@ -16,7 +16,6 @@ pub struct UserForm {
     pub email: String,
     #[validate(length(min = 8))]
     pub password: String,
-    // pub is_admin: bool // WARNING! SECURITY RISK!!!
 }
 
 #[derive(Insertable, Deserialize)]
