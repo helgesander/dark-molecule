@@ -1,0 +1,12 @@
+[package]
+name = "dark-molecule-frontend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
+yew-router = { git = "https://github.com/yewstack/yew.git" }
+uuid = { version = "1.11.0" , features = ["v4", "fast-rng", "macro-diagnostics", "serde", "js"]}
+gloo-net = "0.6.0"
+serde = { version = "1.0", features = ["derive"] }
+wasm-bindgen-futures = "0.4.50"

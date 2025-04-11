@@ -1,15 +1,11 @@
-FROM node:lts-alpine
+FROM rust:latest
 
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm install
+RUN cargo install trunk && \
+    rustup target add wasm32-unknown-unknown
 
 COPY . .
 
-RUN npm run build
+RUN trunk build --release
 
-EXPOSE 8080
-
-# TODO
+ENTRYPOINT [ "trunk", "serve", "--release" ]
