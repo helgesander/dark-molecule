@@ -10,15 +10,15 @@ services:
       PORT: ${BACKEND_PORT}
     depends_on:
       - db
-#      - frontend
-#  frontend:
-#    build:
-#      context: ./frontend
-#    ports:
-#      - "${FRONTEND_PORT}:8080"
-#  nginx:
-#    image: nginx:latest
-#    restart: unless-stopped
+      - frontend
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "${FRONTEND_PORT}:8080"
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
   db:
     image: postgres:17.2
     restart: unless-stopped

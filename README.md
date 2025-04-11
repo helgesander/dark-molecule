@@ -8,7 +8,20 @@ via Docker:
 docker compose up --build
 ```
 
-Without docker: 
+## Configuration
+
+All settings presented in .env.example:
+
+```dotenv
+POSTGRES_USER: postgres
+POSTGRES_PASSWORD: postgres
+POSTGRES_DB: dark-molecule-db
+POSTGRES_PORT: 5432
+BACKEND_PORT: 8080
+FRONTEND_PORT: 80
+TEMPLATES_PATH: ./templates
+
+```
 
 
 ## TODO
@@ -26,5 +39,9 @@ Without docker:
 - [] Сделать так, чтобы при возвращении Bad Request возвращалась причина
 - [] Добавить функцию валидации, что юзернейм, почта уникальны
 - [] Добавить инициализацию бд в код бекенда
-- 
-
+- [] Модуль сканировать nmap для заполнения списка хостов (САМОЕ ГЛАВНОЕ)
+- [] Модуль сканирования nuclei, а также преобразования результатов в готовые issues (САМОЕ ГЛАВНОЕ)
+- [] Модуль сканирования gowitness, если нас интересует только веб
+- [] Модуль сканирования Shodan для нахождения каких-то точек входа еще
+- [] Модуль фаззинга ffufai для сканирования поддиректорий в вебе (ОЧЕНЬ ОПЦИОНАЛЬНО)
+- [] Модуль сканирования nessus (ОЧЕНЬ ОПЦИОНАЛЬНО)
