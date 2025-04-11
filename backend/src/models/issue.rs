@@ -7,7 +7,7 @@ use diesel::prelude::*;
 #[diesel(belongs_to(project))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Issue {
-    pub id: i32,
+    pub id: Uuid,
     pub name: String,
     pub description: String,
     pub mitigation: String,

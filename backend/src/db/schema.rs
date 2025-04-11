@@ -12,7 +12,7 @@ diesel::table! {
 
 diesel::table! {
     issues (id) {
-        id -> Int4,
+        id -> Uuid,
         #[max_length = 100]
         name -> Varchar,
         description -> Text,
@@ -32,6 +32,27 @@ diesel::table! {
         end_date -> Date,
         folder -> Text,
         team_id -> Uuid,
+    }
+}
+
+diesel::table! {
+    proof_of_concepts (id) {
+        id -> Uuid,
+        issue_id -> Uuid,
+        description -> Text,
+        data -> Bytea,
+    }
+}
+
+diesel::table! {
+    report_templates (id) {
+        id -> Uuid,
+        team_id -> Uuid,
+        user_id -> Uuid,
+        #[max_length = 100]
+        name -> Varchar,
+        #[max_length = 10]
+        filename -> Varchar,
     }
 }
 
@@ -81,6 +102,9 @@ diesel::table! {
 diesel::joinable!(hosts -> projects (project_id));
 diesel::joinable!(issues -> projects (project_id));
 diesel::joinable!(projects -> teams (team_id));
+diesel::joinable!(proof_of_concepts -> issues (issue_id));
+diesel::joinable!(report_templates -> teams (team_id));
+diesel::joinable!(report_templates -> users (user_id));
 diesel::joinable!(teams -> users (admin_id));
 diesel::joinable!(users_projects -> projects (project_id));
 diesel::joinable!(users_projects -> users (user_id));
@@ -91,6 +115,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     hosts,
     issues,
     projects,
+    proof_of_concepts,
+    report_templates,
     teams,
     users,
     users_projects,

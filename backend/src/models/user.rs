@@ -8,7 +8,7 @@ use log::debug;
 use crate::db::schema::users::dsl::*;
 use crate::db::schema::users::id;
 use crate::dtos::db::UserForm;
-use crate::utils::hash_password;
+use crate::utils::{hash_password, FilterObjects};
 
 #[derive(Queryable, Selectable, Identifiable, Debug, Serialize)]
 #[diesel(table_name = users)]
@@ -44,12 +44,13 @@ impl User {
             .first(conn)
             .optional()
     }
-    // TODO: maybe change arg type of size to i64
-    pub fn get_users(conn: &mut PgConnection, size: usize) -> QueryResult<Vec<User>> {
-        debug!("Get {} users", size);
+
+    pub fn get_users(conn: &mut PgConnection, filter_data: &FilterObjects) -> QueryResult<Vec<User>> {
+        debug!("size = {}, name = {}", filter_data.size, filter_data.name);
         users
             .select(User::as_select())
-            .limit(size as i64)
+            .filter(username.eq(filter_data.name.clone()))
+            .limit(filter_data.size as i64)
             .order(created_at.asc())
             .load(conn)
     }

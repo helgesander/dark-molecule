@@ -5,7 +5,7 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use log::{error, debug};
 use crate::dtos::db::UserForm;
 use crate::models::user::User;
-use crate::utils::{hash_password, Pagination};
+use crate::utils::{hash_password, FilterObjects};
 use crate::utils::errors::AppError;
 use crate::dtos::handlers::UserData;
 use validator::Validate;
@@ -124,15 +124,16 @@ pub async fn delete_user_handler(
 #[get("/")]
 pub async fn get_users_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    size: web::Query<Pagination>
+    filter_data: web::Query<FilterObjects>
 ) -> actix_web::Result<HttpResponse, AppError> {
+    // TODO: change return of all object of user, need create other response struct which will return data without password
     let users = web::block(move || {
         let mut conn = pool.get().map_err(|e| {
             error!("Failed to get database connection: {}", e);
             AppError::InternalServerError
         })?;
         // TODO: try understand why way without map_err here dosen't work
-        User::get_users(&mut conn, size.size)
+        User::get_users(&mut conn, &filter_data)
             .map_err(|e| {
                 error!("Failed to get users: {}", e);
                 AppError::DatabaseError

@@ -1,5 +1,8 @@
 use serde::Serialize;
+use crate::models::project::Project;
 use crate::models::user::User;
+// use crate::db::schema::projects::;
+
 
 #[derive(Serialize)]
 pub struct UserData {
@@ -8,6 +11,12 @@ pub struct UserData {
     pub username: String,
     pub email: String,
     pub is_admin: bool,
+}
+
+#[derive(Serialize)]
+pub struct ProjectResponse {
+    pub name: String,
+    pub description: String,
 }
 
 impl UserData {
@@ -22,5 +31,21 @@ impl UserData {
             email: data.email.clone(),
             is_admin: data.is_admin,
         })
+    }
+}
+
+impl ProjectResponse {
+    pub fn new(data: &Project) -> ProjectResponse {
+        if let Some(description) = data.description.clone() {
+            ProjectResponse {
+                name: data.name.clone(),
+                description,
+            }
+        } else {
+            ProjectResponse {
+                name: data.name.clone(),
+                description: String::new(),
+            }
+        }
     }
 }

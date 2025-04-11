@@ -1,4 +1,5 @@
 pub mod errors;
+pub mod config;
 
 use serde::{Deserialize, Serialize};
 use argon2::{
@@ -11,8 +12,15 @@ use argon2::{
 
 
 #[derive(Deserialize)]
-pub struct Pagination {
-    pub size: usize
+pub struct FilterObjects {
+    pub size: usize,
+    pub name: String
+}
+
+#[derive(Serialize)]
+pub struct ResponseJson<'a> {
+    pub status: usize,
+    pub message: &'a str
 }
 
 // TODO: change location of this functions
