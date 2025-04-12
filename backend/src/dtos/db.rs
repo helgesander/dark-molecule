@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use diesel::prelude::*;
 use crate::db::schema;
 use serde::Deserialize;
@@ -19,38 +18,9 @@ pub struct UserForm {
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
-#[diesel(table_name = schema::projects)]
-pub struct ProjectForm {
-    name: String,
-    description: Option<String>,
-    start_date: Option<NaiveDate>,
-    end_date: Option<NaiveDate>,
-    folder: String,
-    team_id: Uuid
-}
-
-#[derive(Insertable, Deserialize, Debug, AsChangeset)]
 #[diesel(table_name = schema::teams)]
 pub struct TeamForm {
     name: String,
     description: Option<String>,
     admin_id: Uuid
-}
-
-#[derive(Insertable, Deserialize, Debug, AsChangeset)]
-#[diesel(table_name = schema::issues)]
-pub struct IssueForm {
-    name: String,
-    description: String,
-    mitigation: String,
-    cvss: f64,
-    project_id: Uuid
-}
-
-#[derive(Insertable, Deserialize)]
-#[diesel(table_name = schema::hosts)]
-pub struct HostForm {
-    hostname: Option<String>,
-    ip_address: String,
-    project_id: Uuid
 }

@@ -1,14 +1,13 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use uuid::Uuid;
 use crate::db::schema::users;
 use diesel::prelude::*;
 use chrono::NaiveDate;
-use diesel::r2d2::PooledConnection;
 use log::debug;
 use crate::db::schema::users::dsl::*;
 use crate::db::schema::users::id;
 use crate::dtos::db::UserForm;
-use crate::utils::{hash_password, FilterObjects};
+use crate::utils::FilterObjects;
 
 #[derive(Queryable, Selectable, Identifiable, Debug, Serialize)]
 #[diesel(table_name = users)]

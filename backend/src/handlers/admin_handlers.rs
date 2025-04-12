@@ -1,4 +1,4 @@
-use actix_web::{get, post, put, web, HttpResponse};
+use actix_web::{get, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use crate::utils::errors::AppError;

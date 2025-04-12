@@ -6,15 +6,7 @@ use derive_more::{Display, Error};
 use diesel::r2d2::Error as R2D2Error;
 use log::error;
 use diesel::result::Error as DieselError;
-use serde::{Deserialize, Serialize};
-use argon2::{
-    password_hash::{
-        rand_core::OsRng,
-        PasswordHash, PasswordHasher, PasswordVerifier, SaltString
-    },
-    Argon2
-};
-use actix_web::cookie::{Cookie, SameSite};
+use serde::Serialize;
 use actix_web::error::BlockingError;
 
 #[derive(Debug, Display, Error)]

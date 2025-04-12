@@ -1,4 +1,4 @@
-use actix_web::{get, post, put, delete, web, HttpResponse, Responder};
+use actix_web::{get, post, put, delete, web, HttpResponse};
 use uuid::Uuid;
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};

@@ -1,4 +1,3 @@
-use crate::db::schema::report_templates::dsl::report_templates;
 use actix_web::{get, post, HttpRequest, HttpResponse};
 use crate::utils::errors::AppError;
 

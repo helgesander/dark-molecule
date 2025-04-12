@@ -15,8 +15,8 @@ diesel::table! {
         id -> Uuid,
         #[max_length = 100]
         name -> Varchar,
-        description -> Text,
-        mitigation -> Text,
+        description -> Nullable<Text>,
+        mitigation -> Nullable<Text>,
         cvss -> Float8,
         project_id -> Uuid,
     }
@@ -28,6 +28,7 @@ diesel::table! {
         #[max_length = 100]
         name -> Varchar,
         description -> Nullable<Text>,
+        scope -> Nullable<Text>,
         start_date -> Date,
         end_date -> Date,
         folder -> Text,

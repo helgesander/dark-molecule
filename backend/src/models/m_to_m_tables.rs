@@ -1,11 +1,6 @@
 use uuid::Uuid;
 use diesel::prelude::*;
 use crate::db::schema::{users_teams, users_projects};
-use crate::models::{
-    user::User,
-    team::Team,
-    project::Project
-};
 
 #[derive(Debug, Queryable, Identifiable, Selectable)]
 #[diesel(table_name = users_projects)]

@@ -1,4 +1,6 @@
-use serde::Serialize;
+use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use crate::models::project::Project;
 use crate::models::user::User;
 // use crate::db::schema::projects::;
@@ -18,6 +20,39 @@ pub struct ProjectResponse {
     pub name: String,
     pub description: String,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct IssueForm {
+    pub name: String,
+    pub description: Option<String>,
+    pub mitigation: Option<String>,
+    pub cvss: Option<f64>,
+}
+
+#[derive(Deserialize)]
+pub struct ProofOfConceptForm {
+    description: String,
+    data: Vec<u8>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ProjectForm {
+    pub name: String,
+    pub description: Option<String>,
+    pub scope: Option<String>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
+    pub folder: String,
+    pub team_id: Uuid
+}
+
+#[derive(Deserialize)]
+pub struct HostForm {
+    pub hostname: Option<String>,
+    pub ip_address: String,
+}
+
+
 
 impl UserData {
     pub fn new(data: &User) -> Option<UserData> {

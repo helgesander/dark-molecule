@@ -1,9 +1,8 @@
-use diesel::{Identifiable, PgConnection, QueryDsl, QueryResult, Queryable, RunQueryDsl, Selectable, SelectableHelper, Table};
+use diesel::{Identifiable, PgConnection, QueryResult, Queryable, RunQueryDsl, Selectable};
 use diesel::associations::HasTable;
 use serde::Serialize;
 use uuid::Uuid;
 use crate::db::schema::report_templates::dsl::report_templates;
-use diesel::prelude::*;
 
 #[derive(Queryable, Selectable, Identifiable, Serialize)]
 #[diesel(table_name = crate::db::schema::report_templates)]

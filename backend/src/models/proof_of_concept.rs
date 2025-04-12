@@ -1,8 +1,7 @@
-use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{Identifiable, PgConnection, QueryResult, Queryable, Selectable};
-use crate::db::schema::proof_of_concepts::dsl::proof_of_concepts;
+use diesel::{Identifiable, Insertable, PgConnection, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::dtos::handlers::ProofOfConceptForm;
 
 #[derive(Queryable, Selectable, Identifiable, Debug, Serialize, Deserialize)]
 #[diesel(table_name = crate::db::schema::proof_of_concepts)]
@@ -16,8 +15,20 @@ pub struct ProofOfConcept {
     pub data: Vec<u8>,
 }
 
+#[derive(Insertable, Deserialize)]
+#[diesel(table_name = crate::db::schema::proof_of_concepts)]
+pub struct NewProofOfConcept {
+    description: String,
+    data: Vec<u8>,
+    issue_id: Uuid
+}
+
 impl ProofOfConcept {
     pub fn get_pocs_by_issue_id(conn: &mut PgConnection, project_id: Uuid) {
+        unimplemented!()
+    }
+
+    pub fn create_poc(conn: &mut PgConnection, data: &ProofOfConceptForm) {
         unimplemented!()
     }
 }

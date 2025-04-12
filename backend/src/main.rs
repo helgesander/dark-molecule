@@ -1,7 +1,6 @@
 extern crate diesel;
 
 use std::env;
-use std::sync::Arc;
 use std::time::Duration;
 use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web::middleware::Logger;
@@ -15,8 +14,6 @@ use actix_session::storage::CookieSessionStore;
 use actix_web::cookie::Key;
 use dotenv::dotenv;
 use crate::services::nuclei_service::NucleiService;
-use crate::utils::ResponseJson;
-use crate::utils::config;
 use crate::utils::config::AppConfig;
 use crate::utils::errors::AppErrorJson;
 

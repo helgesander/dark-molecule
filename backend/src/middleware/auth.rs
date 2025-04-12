@@ -14,7 +14,7 @@ pub enum Role {
 }
 
 pub async fn auth_middleware(
-    mut req: ServiceRequest,
+    req: ServiceRequest,
     next: Next<impl MessageBody>
 ) -> Result<ServiceResponse<impl MessageBody>, AppError> {
     let session = req.get_session();

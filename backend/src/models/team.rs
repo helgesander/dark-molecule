@@ -1,4 +1,3 @@
-use diesel::associations::HasTable;
 use uuid::Uuid;
 use diesel::prelude::*;
 use log::debug;
@@ -48,6 +47,16 @@ impl Team {
                     .select(Team::as_select())
                     .load(conn)
             }).unwrap_or_else(|| Ok(Vec::new()))
+    }
+
+    pub fn get_team(conn: &mut PgConnection, team_id: Uuid) -> QueryResult<Option<Team>> {
+        use crate::db::schema::teams::dsl::*;
+        debug!("Get team with id {}", team_id);
+        teams
+            .filter(id.eq(team_id))
+            .select(Team::as_select())
+            .first::<Team>(conn)
+            .optional()
     }
 
     pub fn delete_team(conn: &mut PgConnection, team_id: Uuid) -> QueryResult<usize> {

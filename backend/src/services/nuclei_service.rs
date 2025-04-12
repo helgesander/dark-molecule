@@ -2,11 +2,10 @@ extern crate chrono;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::Utc;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::utils::errors::AppError;
 use thiserror::Error;
 
 #[derive(Clone)]

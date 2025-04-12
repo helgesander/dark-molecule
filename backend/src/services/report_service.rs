@@ -1,8 +1,3 @@
-use std::error::Error;
-use handlebars::Handlebars;
-use serde_json::json;
-use crate::models::project::Project;
-use crate::models::report_template::ReportTemplate;
 
 enum ReportFormat {
     Markdown,

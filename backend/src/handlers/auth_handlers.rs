@@ -1,6 +1,6 @@
-use actix_web::{get, post, put, delete, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse};
 use crate::utils::errors::AppError;
-use actix_session::{Session, SessionExt};
+use actix_session::Session;
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use log::error;

@@ -1,27 +1,34 @@
-use diesel::associations::HasTable;
 use uuid::Uuid;
 use crate::db::schema::issues;
 use crate::db::schema::projects;
 use diesel::prelude::*;
 use log::debug;
-use serde::Serialize;
-use crate::db::schema::issues::dsl::*;
-use crate::db::schema::projects::id;
-use crate::dtos::db::IssueForm;
+use serde::{Deserialize, Serialize};
+use crate::dtos::handlers::IssueForm;
 use crate::models::project::Project;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Associations, PartialEq, Debug)]
-#[diesel(table_name = crate::db::schema::issues)]
+#[diesel(table_name = issues)]
 #[diesel(primary_key(id))]
 #[diesel(belongs_to(Project, foreign_key = project_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Issue {
     pub id: Uuid,
     pub name: String,
-    pub description: String,
-    pub mitigation: String,
+    pub description: Option<String>,
+    pub mitigation: Option<String>,
     pub cvss: f64,
     pub project_id: Uuid
+}
+
+#[derive(Insertable, Deserialize, AsChangeset, Debug)]
+#[diesel(table_name = issues)]
+struct NewIssue {
+    name: String,
+    description: Option<String>,
+    mitigation: Option<String>,
+    cvss: Option<f64>,
+    project_id: Uuid
 }
 
 impl Issue {
@@ -39,27 +46,45 @@ impl Issue {
             .unwrap_or_else(|| Ok(Vec::new()))
     }
 
-    pub fn create_issue(conn: &mut PgConnection, form: &IssueForm) -> QueryResult<Issue> {
+    pub fn create_issue(conn: &mut PgConnection, form: &IssueForm, id_project: Uuid) -> QueryResult<Issue> {
         debug!("Create issue with data {:?}", form);
+        let new_issue = NewIssue {
+            name: form.name.clone(),
+            description: form.description.clone(),
+            mitigation: form.mitigation.clone(),
+            cvss: form.cvss,
+            project_id: id_project,
+        };
         diesel::insert_into(issues::table)
-            .values(form)
+            .values(new_issue)
             .get_result::<Issue>(conn)
     }
 
-    pub fn update_issue(conn: &mut PgConnection, form: &IssueForm, issue_id: Uuid) -> QueryResult<usize> {
+    pub fn update_issue(conn: &mut PgConnection, form: &IssueForm, id_project: Uuid, issue_id: Uuid) -> QueryResult<usize> {
+        use crate::db::schema::issues::dsl::*;
+        let new_issue = NewIssue {
+            name: form.name.clone(),
+            description: form.description.clone(),
+            mitigation: form.mitigation.clone(),
+            cvss: form.cvss,
+            project_id: id_project
+        };
         diesel::update(issues.filter(id.eq(issue_id)))
-            .set(form)
+            .set(&new_issue)
             .execute(conn)
     }
 
     pub fn delete_issue(conn: &mut PgConnection, issue_id: Uuid) -> QueryResult<usize> {
+        use crate::db::schema::issues::dsl::*; // Импортируем DSL
+
         conn.transaction(|conn| {
-            let count = diesel::delete(projects::table).filter(projects::id.eq(issue_id)).execute(conn)?;
-            Ok(count)
+            diesel::delete(issues.filter(id.eq(issue_id))) // Используем DSL-алиас
+                .execute(conn)
         })
     }
 
     pub fn get_issue(conn: &mut PgConnection, issue_id: Uuid) -> QueryResult<Option<Issue>> {
+        use crate::db::schema::issues::dsl::*;
         issues
             .filter(id.eq(issue_id))
             .select(Issue::as_select())
