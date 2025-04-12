@@ -14,9 +14,11 @@ use actix_session::SessionMiddleware;
 use actix_session::storage::CookieSessionStore;
 use actix_web::cookie::Key;
 use dotenv::dotenv;
+use crate::services::nuclei_service::NucleiService;
 use crate::utils::ResponseJson;
 use crate::utils::config;
 use crate::utils::config::AppConfig;
+use crate::utils::errors::AppErrorJson;
 
 mod handlers;
 mod routes;
@@ -39,6 +41,7 @@ async fn main() -> std::io::Result<()> {
             log_level: "debug".to_string(),
             secret_key: Key::from("428742874djkjkdfsdhfhhkjdchsjkdhfkjshdfjkshdjfhsdjfh2873894728934728dajkshdkjahdkjahdjkahdjkahsjkdhajsdhajkhsdjakhsd27349287842742874387ajsdhkajshdjahdjkahdjkahsdjhajsdh23728734928734".as_bytes()),
             templates_path: "./templates".to_string(),
+            scans_path: "./scans".to_string()
         };
     }
 
@@ -52,10 +55,12 @@ async fn main() -> std::io::Result<()> {
         .connection_timeout(Duration::from_secs(30))
         .build(manager).expect("Can't create pool");
 
+    let nuclei_service = NucleiService::new(config.scans_path.clone());
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(pool.clone()))
             .app_data(Data::new(config.clone()))
+            .app_data(Data::new(nuclei_service.clone()))
             .wrap(Logger::default())
             .wrap(SessionMiddleware::builder(CookieSessionStore::default(), config.secret_key.clone())
                 .cookie_name("session".parse().unwrap())
@@ -65,7 +70,7 @@ async fn main() -> std::io::Result<()> {
             .default_service(
                 web::route()
                     .to(|| async {
-                        HttpResponse::NotFound().json(ResponseJson {status: 404, message: "Not Found"})
+                        HttpResponse::NotFound().json(AppErrorJson {status: 404, error: "Not Found"})
                     })
             )
     })

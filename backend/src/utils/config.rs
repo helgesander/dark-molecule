@@ -9,6 +9,7 @@ pub struct AppConfig {
     pub log_level: String,
     pub secret_key: Key,
     pub templates_path: String,
+    pub scans_path: String
 }
 
 impl AppConfig {
@@ -20,6 +21,7 @@ impl AppConfig {
             log_level: env::var("LOG_LEVEL").unwrap_or("info".into()),
             secret_key: Key::generate(),
             templates_path: env::var("TEMPLATES_PATH").unwrap_or("/app".into()),
+            scans_path: env::var("SCANS_PATH").unwrap_or("/app/".into()),
         })
     }
 }

@@ -18,7 +18,7 @@ pub struct UserForm {
     pub password: String,
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable, Deserialize, Debug, AsChangeset)]
 #[diesel(table_name = schema::projects)]
 pub struct ProjectForm {
     name: String,
@@ -29,7 +29,7 @@ pub struct ProjectForm {
     team_id: Uuid
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable, Deserialize, Debug, AsChangeset)]
 #[diesel(table_name = schema::teams)]
 pub struct TeamForm {
     name: String,
@@ -37,7 +37,7 @@ pub struct TeamForm {
     admin_id: Uuid
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable, Deserialize, Debug, AsChangeset)]
 #[diesel(table_name = schema::issues)]
 pub struct IssueForm {
     name: String,

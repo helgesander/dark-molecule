@@ -27,7 +27,15 @@ RUN apt-get update && apt-get install -y \
     libpq5 \
     libpq-dev \
     postgresql-client \
+    nmap \
     && rm -rf /var/lib/apt/lists/* \
+
+# Install golang
+RUN wget https://go.dev/dl/go1.24.2.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.24.2.linux-amd64.tar.gz && \
+    export PATH=$PATH:/usr/local/go/bin && \
+    go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest \
+
 USER daemon
 COPY entrypoint.sh .
 COPY src/db src/db

@@ -25,24 +25,18 @@ pub enum AppError {
     BadRequest,
     #[display("Timeout")]
     Timeout,
+    #[display("Not Found")]
+    NotFound,
     #[display("Internal Server Error")]
     DatabaseError,
     #[display("Unauthorized")]
-    UnauthorizedError,
-    #[display("Invalid token format")]
-    InvalidTokenFormatError,
-    #[display("Token Expired")]
-    TokenExpiredError,
-    #[display("Invalid Authorization Header")]
-    InvalidAuthorizationHeaderError,
-    #[display("No Authorization Header")]
-    NoAuthorizationHeaderError,
+    UnauthorizedError
 }
 
 #[derive(Serialize)]
-struct AppErrorJson {
-    status: usize,
-    error: &'static str
+pub struct AppErrorJson {
+    pub status: usize,
+    pub error: &'static str
 }
 
 impl From<R2D2Error> for AppError {
@@ -80,11 +74,8 @@ impl error::ResponseError for AppError {
             AppError::BadRequest => StatusCode::BAD_REQUEST,
             AppError::Timeout => StatusCode::GATEWAY_TIMEOUT,
             AppError::DatabaseError => StatusCode::INTERNAL_SERVER_ERROR,
-            AppError::InvalidTokenFormatError |
-            AppError::TokenExpiredError |
-            AppError::InvalidAuthorizationHeaderError |
-            AppError::UnauthorizedError |
-            AppError::NoAuthorizationHeaderError => StatusCode::UNAUTHORIZED,
+            AppError::UnauthorizedError => StatusCode::UNAUTHORIZED,
+            AppError::NotFound => StatusCode::NOT_FOUND,
         }
     }
 
@@ -94,11 +85,8 @@ impl error::ResponseError for AppError {
             AppError::BadRequest => HttpResponse::BadRequest().json(AppErrorJson { status: 400, error: "Bad Request" }),
             AppError::Timeout => HttpResponse::TooManyRequests().append_header((header::LOCATION, "/")).finish(),
             AppError::DatabaseError => HttpResponse::InternalServerError().json(AppErrorJson { status: 505, error: "Internal Server Error" }),
-            AppError::InvalidTokenFormatError => HttpResponse::Unauthorized().json(AppErrorJson { status: 401, error: "Invalid token format" }),
-            AppError::TokenExpiredError => HttpResponse::Unauthorized().json(AppErrorJson { status: 401, error: "Token Expired" }),
-            AppError::InvalidAuthorizationHeaderError => HttpResponse::Unauthorized().json(AppErrorJson { status: 401, error: "Invalid Authorization Header" }),
-            AppError::NoAuthorizationHeaderError => HttpResponse::Unauthorized().json(AppErrorJson { status: 401, error: "No Authorization Header" }),
             AppError::UnauthorizedError => HttpResponse::Unauthorized().json(AppErrorJson{status: 401, error: "Unauthorized" }),
+            AppError::NotFound => HttpResponse::NotFound().json(AppErrorJson { status: 404, error: "Not Found" }),
         }
     }
 }

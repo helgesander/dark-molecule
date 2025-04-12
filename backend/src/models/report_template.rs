@@ -22,7 +22,7 @@ pub struct ReportTemplate {
 
 impl ReportTemplate {
     pub fn get_report_templates(conn: &mut PgConnection) -> QueryResult<Vec<ReportTemplate>> {
-        report_templates::table()   .load(conn)
+        report_templates::table().load(conn)
     }
 
     pub fn create_report_template(conn: &mut PgConnection) -> QueryResult<ReportTemplate> {

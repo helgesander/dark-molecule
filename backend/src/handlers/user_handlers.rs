@@ -70,11 +70,7 @@ pub async fn create_user_handler(
         let user = User::create_user(&mut conn, &user_data)?;
         Ok::<_, AppError>(user)
     })
-        .await
-        .map_err(|e| {
-            error!("Async block error: {}", e);
-            AppError::InternalServerError
-        })??;
+        .await??;
 
     Ok(HttpResponse::Created().json(created_user))
 }
@@ -143,3 +139,4 @@ pub async fn get_users_handler(
 
     Ok(HttpResponse::Ok().json(users))
 }
+

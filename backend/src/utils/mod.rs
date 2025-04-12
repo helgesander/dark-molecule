@@ -18,9 +18,9 @@ pub struct FilterObjects {
 }
 
 #[derive(Serialize)]
-pub struct ResponseJson<'a> {
-    pub status: usize,
-    pub message: &'a str
+pub struct ResponseJson {
+    // pub status: usize,
+    pub message: String
 }
 
 // TODO: change location of this functions

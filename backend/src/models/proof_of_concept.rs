@@ -17,7 +17,7 @@ pub struct ProofOfConcept {
 }
 
 impl ProofOfConcept {
-    pub fn get_pocs_by_project_id(conn: &mut PgConnection, project_id: Uuid) {
+    pub fn get_pocs_by_issue_id(conn: &mut PgConnection, project_id: Uuid) {
         unimplemented!()
     }
 }
