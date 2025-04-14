@@ -1,6 +1,6 @@
-use uuid::Uuid;
+use crate::db::schema::{users_projects, users_teams};
 use diesel::prelude::*;
-use crate::db::schema::{users_teams, users_projects};
+use uuid::Uuid;
 
 #[derive(Debug, Queryable, Identifiable, Selectable)]
 #[diesel(table_name = users_projects)]
@@ -10,7 +10,7 @@ use crate::db::schema::{users_teams, users_projects};
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UserProject {
     pub user_id: Uuid,
-    pub project_id: Uuid
+    pub project_id: Uuid,
 }
 
 #[derive(Debug, Queryable, Identifiable, Selectable)]
@@ -21,5 +21,5 @@ pub struct UserProject {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UserTeam {
     pub user_id: Uuid,
-    pub team_id: Uuid
+    pub team_id: Uuid,
 }

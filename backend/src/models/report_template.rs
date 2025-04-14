@@ -1,8 +1,8 @@
-use diesel::{Identifiable, PgConnection, QueryResult, Queryable, RunQueryDsl, Selectable};
+use crate::db::schema::report_templates::dsl::report_templates;
 use diesel::associations::HasTable;
+use diesel::{Identifiable, PgConnection, QueryResult, Queryable, RunQueryDsl, Selectable};
 use serde::Serialize;
 use uuid::Uuid;
-use crate::db::schema::report_templates::dsl::report_templates;
 
 #[derive(Queryable, Selectable, Identifiable, Serialize)]
 #[diesel(table_name = crate::db::schema::report_templates)]
@@ -15,9 +15,8 @@ pub struct ReportTemplate {
     pub team_id: Uuid,
     pub user_id: Uuid,
     pub name: String,
-    pub filename: String
+    pub filename: String,
 }
-
 
 impl ReportTemplate {
     pub fn get_report_templates(conn: &mut PgConnection) -> QueryResult<Vec<ReportTemplate>> {

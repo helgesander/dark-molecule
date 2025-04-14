@@ -38,10 +38,12 @@ diesel::table! {
 
 diesel::table! {
     proof_of_concepts (id) {
-        id -> Uuid,
+        id -> Int4,
         issue_id -> Uuid,
         description -> Text,
         data -> Bytea,
+        #[max_length = 50]
+        mime_type -> Varchar,
     }
 }
 

@@ -1,10 +1,7 @@
+use crate::models::user::User;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::models::project::Project;
-use crate::models::user::User;
-// use crate::db::schema::projects::;
-
 
 #[derive(Serialize)]
 pub struct UserData {
@@ -13,12 +10,6 @@ pub struct UserData {
     pub username: String,
     pub email: String,
     pub is_admin: bool,
-}
-
-#[derive(Serialize)]
-pub struct ProjectResponse {
-    pub name: String,
-    pub description: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -31,8 +22,9 @@ pub struct IssueForm {
 
 #[derive(Deserialize)]
 pub struct ProofOfConceptForm {
-    description: String,
-    data: Vec<u8>,
+    pub description: String,
+    pub data: Vec<u8>,
+    pub mime_type: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -43,7 +35,7 @@ pub struct ProjectForm {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
     pub folder: String,
-    pub team_id: Uuid
+    pub team_id: Uuid,
 }
 
 #[derive(Deserialize)]
@@ -51,8 +43,6 @@ pub struct HostForm {
     pub hostname: Option<String>,
     pub ip_address: String,
 }
-
-
 
 impl UserData {
     pub fn new(data: &User) -> Option<UserData> {
@@ -66,21 +56,5 @@ impl UserData {
             email: data.email.clone(),
             is_admin: data.is_admin,
         })
-    }
-}
-
-impl ProjectResponse {
-    pub fn new(data: &Project) -> ProjectResponse {
-        if let Some(description) = data.description.clone() {
-            ProjectResponse {
-                name: data.name.clone(),
-                description,
-            }
-        } else {
-            ProjectResponse {
-                name: data.name.clone(),
-                description: String::new(),
-            }
-        }
     }
 }

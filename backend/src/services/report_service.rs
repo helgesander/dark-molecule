@@ -1,8 +1,7 @@
-
 enum ReportFormat {
     Markdown,
     Pdf,
-    Docx
+    Docx,
 }
 pub struct ReportService;
 

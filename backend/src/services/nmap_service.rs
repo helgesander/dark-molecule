@@ -1,4 +1,3 @@
-
 // pub struct NmapScanService;
 //
 // impl NmapScanService {

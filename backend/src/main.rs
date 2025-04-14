@@ -1,30 +1,30 @@
 extern crate diesel;
 
-use std::env;
-use std::time::Duration;
-use actix_web::{web, App, HttpResponse, HttpServer};
-use actix_web::middleware::Logger;
-use actix_web::web::Data;
-use env_logger::Env;
-use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, Pool};
 use crate::routes::init_routes;
-use actix_session::SessionMiddleware;
-use actix_session::storage::CookieSessionStore;
-use actix_web::cookie::Key;
-use dotenv::dotenv;
 use crate::services::nuclei_service::NucleiService;
 use crate::utils::config::AppConfig;
 use crate::utils::errors::AppErrorJson;
+use actix_session::storage::CookieSessionStore;
+use actix_session::SessionMiddleware;
+use actix_web::cookie::Key;
+use actix_web::middleware::Logger;
+use actix_web::web::Data;
+use actix_web::{web, App, HttpResponse, HttpServer};
+use diesel::prelude::*;
+use diesel::r2d2::{ConnectionManager, Pool};
+use dotenv::dotenv;
+use env_logger::Env;
+use std::env;
+use std::time::Duration;
 
-mod handlers;
-mod routes;
-mod models;
-mod utils;
 mod db;
 mod dtos;
+mod handlers;
 mod middleware;
+mod models;
+mod routes;
 mod services;
+mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -50,7 +50,8 @@ async fn main() -> std::io::Result<()> {
     let pool = Pool::builder()
         .max_size(15)
         .connection_timeout(Duration::from_secs(30))
-        .build(manager).expect("Can't create pool");
+        .build(manager)
+        .expect("Can't create pool");
 
     let nuclei_service = NucleiService::new(config.scans_path.clone());
     HttpServer::new(move || {
@@ -59,17 +60,22 @@ async fn main() -> std::io::Result<()> {
             .app_data(Data::new(config.clone()))
             .app_data(Data::new(nuclei_service.clone()))
             .wrap(Logger::default())
-            .wrap(SessionMiddleware::builder(CookieSessionStore::default(), config.secret_key.clone())
+            .wrap(
+                SessionMiddleware::builder(
+                    CookieSessionStore::default(),
+                    config.secret_key.clone(),
+                )
                 .cookie_name("session".parse().unwrap())
                 // .cookie_max_age(time::Duration::hours(2)) // TODO: try it later
-                .build())
-            .configure(init_routes)
-            .default_service(
-                web::route()
-                    .to(|| async {
-                        HttpResponse::NotFound().json(AppErrorJson {status: 404, error: "Not Found"})
-                    })
+                .build(),
             )
+            .configure(init_routes)
+            .default_service(web::route().to(|| async {
+                HttpResponse::NotFound().json(AppErrorJson {
+                    status: 404,
+                    error: "Not Found",
+                })
+            }))
     })
     .bind(("0.0.0.0", 8000))?
     .run()

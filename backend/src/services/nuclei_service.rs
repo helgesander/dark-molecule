@@ -1,12 +1,12 @@
 extern crate chrono;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 use chrono::Utc;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct NucleiService {
@@ -31,7 +31,6 @@ pub struct ScanResult {
     pub error: Option<String>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum ScanStatus {
     Queued,
@@ -39,7 +38,6 @@ pub enum ScanStatus {
     Completed,
     Failed,
 }
-
 
 #[derive(Debug, Error)]
 pub enum NucleiError {
@@ -60,28 +58,26 @@ pub struct NucleiFinding {
 }
 
 impl NucleiService {
-    pub fn new(scans_dir: impl AsRef<Path>, /* nuclei_path: impl Into<String> */) -> Self {
+    pub fn new(scans_dir: impl AsRef<Path> /* nuclei_path: impl Into<String> */) -> Self {
         Self {
             scans_dir: scans_dir.as_ref().to_path_buf(),
             // nuclei_path: nuclei_path.into(),
         }
     }
 
-    pub async fn create_scan(&self, request: ScanRequest) -> Result<String, NucleiError> { // TODO: read about it and change after maybe
+    pub async fn create_scan(&self, request: ScanRequest) -> Result<String, NucleiError> {
+        // TODO: read about it and change after maybe
         info!("Started Nuclei scan ");
         let task_id = Uuid::new_v4().to_string();
         let output_dir = self.scans_dir.join(&task_id);
-        fs::create_dir_all(&output_dir).map_err(
-            |e| NucleiError::IoError(e),
-        )?;
+        fs::create_dir_all(&output_dir).map_err(|e| NucleiError::IoError(e))?;
 
         let scan_time = Utc::now().to_string().replace("-", "_");
         let output_file = output_dir.join(format!("result_{}.json", scan_time));
 
         // Запускаем сканирование в фоне
-        tokio::task::spawn_blocking(move || {
-            Self::run_nuclei_scan(request, &output_file)
-        }).await
+        tokio::task::spawn_blocking(move || Self::run_nuclei_scan(request, &output_file))
+            .await
             .map_err(|e| NucleiError::ExecutionError(e.to_string()))??;
 
         Ok(task_id)
@@ -119,8 +115,7 @@ impl NucleiService {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .output()
-            .map_err( |e| NucleiError::IoError(e) )?;
-
+            .map_err(|e| NucleiError::IoError(e))?;
 
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr).into_owned();
@@ -134,9 +129,12 @@ impl NucleiService {
         let output_file = self.scans_dir.join(task_id).join("results.json");
 
         if output_file.exists() {
-            return Err(NucleiError::ParseError("Output file doesn't exist".to_string())) // TODO: change error for other error
+            return Err(NucleiError::ParseError(
+                "Output file doesn't exist".to_string(),
+            )); // TODO: change error for other error
         }
-        Ok(ScanResult { // TODO: fix adding scan output to struct
+        Ok(ScanResult {
+            // TODO: fix adding scan output to struct
             task_id: task_id.to_string(),
             status: ScanStatus::Running,
             findings: None,
@@ -144,4 +142,3 @@ impl NucleiService {
         })
     }
 }
-

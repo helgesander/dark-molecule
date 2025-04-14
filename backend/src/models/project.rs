@@ -1,12 +1,12 @@
-use uuid::Uuid;
-use diesel::prelude::*;
-use chrono::NaiveDate;
-use diesel::associations::HasTable;
-use log::debug;
-use serde::{Deserialize, Serialize};
 use crate::dtos::handlers::ProjectForm;
 use crate::models::host::Host;
 use crate::models::issue::Issue;
+use chrono::NaiveDate;
+use diesel::associations::HasTable;
+use diesel::prelude::*;
+use log::debug;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Deserialize, Debug)]
 #[diesel(table_name = crate::db::schema::projects)]
@@ -21,7 +21,7 @@ pub struct Project {
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
     pub folder: String,
-    pub team_id: Uuid
+    pub team_id: Uuid,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
@@ -33,7 +33,7 @@ struct NewProject {
     start_date: Option<NaiveDate>,
     end_date: Option<NaiveDate>,
     folder: String,
-    team_id: Uuid
+    team_id: Uuid,
 }
 
 #[derive(Serialize, Debug)]
@@ -47,17 +47,20 @@ pub struct ProjectFullResponse {
     folder: String,
     team_id: Uuid,
     issues: Vec<Issue>,
-    hosts: Vec<Host>
+    hosts: Vec<Host>,
 }
 
 #[derive(Serialize)]
 pub struct ProjectOverviewResponse {
     pub name: String,
-    pub scope: Option<String>
+    pub scope: Option<String>,
 }
 
 impl Project {
-    pub fn  get_project_by_id(conn: &mut PgConnection, project_id: Uuid) -> QueryResult<Option<ProjectFullResponse>>{
+    pub fn get_project_by_id(
+        conn: &mut PgConnection,
+        project_id: Uuid,
+    ) -> QueryResult<Option<ProjectFullResponse>> {
         use crate::db::schema::projects::dsl::*;
         let project = projects
             .filter(id.eq(project_id))
@@ -105,7 +108,11 @@ impl Project {
             .get_result::<Project>(conn) // TODO: change this method to add work with team id
     }
 
-    pub fn update_project(conn: &mut PgConnection, form: &ProjectForm, project_id: Uuid) -> QueryResult<usize> {
+    pub fn update_project(
+        conn: &mut PgConnection,
+        form: &ProjectForm,
+        project_id: Uuid,
+    ) -> QueryResult<usize> {
         use crate::db::schema::projects::dsl::*;
         let new_project = NewProject {
             name: form.name.clone(),
@@ -128,7 +135,7 @@ impl Project {
         debug!("Deleting project with data {:?}", project_id);
         diesel::delete(projects.filter(id.eq(project_id))).execute(conn)
     }
-    
+
     pub fn to_full_response(&self, conn: &mut PgConnection) -> QueryResult<ProjectFullResponse> {
         Ok(ProjectFullResponse {
             id: self.id,

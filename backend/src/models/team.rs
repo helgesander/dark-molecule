@@ -1,14 +1,11 @@
-use uuid::Uuid;
+use crate::db::schema::users::id;
+use crate::{
+    db::schema::teams, db::schema::users::dsl::users, dtos::db::TeamForm, models::user::User,
+};
 use diesel::prelude::*;
 use log::debug;
 use serde::Serialize;
-use crate::{
-    models::user::User,
-    db::schema::users::dsl::users,
-    db::schema::teams,
-    dtos::db::TeamForm
-};
-use crate::db::schema::users::id;
+use uuid::Uuid;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Associations, PartialEq, Debug)]
 #[diesel(table_name = crate::db::schema::teams)]
@@ -19,7 +16,7 @@ pub struct Team {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    admin_id: Uuid
+    admin_id: Uuid,
 }
 
 impl Team {
@@ -35,7 +32,10 @@ impl Team {
         teams::table.load::<Team>(conn)
     }
 
-    pub fn get_teams_by_admin_id(conn: &mut PgConnection, admin_id: Uuid) -> QueryResult<Vec<Team>> {
+    pub fn get_teams_by_admin_id(
+        conn: &mut PgConnection,
+        admin_id: Uuid,
+    ) -> QueryResult<Vec<Team>> {
         debug!("Get teams by admin id {}", admin_id);
         users
             .filter(id.eq(admin_id))
@@ -46,7 +46,8 @@ impl Team {
                 Team::belonging_to(&user)
                     .select(Team::as_select())
                     .load(conn)
-            }).unwrap_or_else(|| Ok(Vec::new()))
+            })
+            .unwrap_or_else(|| Ok(Vec::new()))
     }
 
     pub fn get_team(conn: &mut PgConnection, team_id: Uuid) -> QueryResult<Option<Team>> {

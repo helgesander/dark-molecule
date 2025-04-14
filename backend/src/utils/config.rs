@@ -1,6 +1,6 @@
-use std::env;
 use actix_web::cookie::Key;
 use dotenv::dotenv;
+use std::env;
 
 #[derive(Clone)]
 pub struct AppConfig {
@@ -9,7 +9,7 @@ pub struct AppConfig {
     pub log_level: String,
     pub secret_key: Key,
     pub templates_path: String,
-    pub scans_path: String
+    pub scans_path: String,
 }
 
 impl AppConfig {
