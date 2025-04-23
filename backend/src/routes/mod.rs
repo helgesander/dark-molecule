@@ -1,13 +1,16 @@
+use actix_web::middleware::from_fn;
 use crate::handlers::{
     admin_handlers, auth_handlers, project_handlers, report_handlers, scan_handlers, team_handlers,
     user_handlers,
 };
 use actix_web::web;
+use crate::middleware::auth::auth_middleware;
 
 // TODO: add auth wrappers for all routes
 fn init_project_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/project")
+            .wrap(from_fn(auth_middleware))
             .service(project_handlers::get_projects_handler)
             .service(project_handlers::get_project_handler)
             .service(project_handlers::create_project_handler)

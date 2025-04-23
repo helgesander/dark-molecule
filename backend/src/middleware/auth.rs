@@ -1,7 +1,7 @@
-use crate::utils::errors::AppError;
 use actix_session::SessionExt;
 use actix_web::body::MessageBody;
-use actix_web::dev::{ServiceRequest, ServiceResponse};
+use actix_web::dev::{Service, ServiceRequest, ServiceResponse};
+use actix_web::Error;
 use actix_web::middleware::Next;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -13,20 +13,23 @@ pub enum Role {
     Guest,
 }
 
+
+// TODO: fix to AppError later
+
 pub async fn auth_middleware(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
-) -> Result<ServiceResponse<impl MessageBody>, AppError> {
+) -> Result<ServiceResponse<impl MessageBody>, Error> {
+    // Получаем сессию
     let session = req.get_session();
-    let user_data = session.get::<UserSession>("user_data").ok();
 
-    match user_data {
-        Some(_) => Ok(next
-            .call(req)
-            .await
-            .map_err(|_| AppError::InternalServerError)?),
-        None => Err(AppError::UnauthorizedError),
+    // Проверяем авторизацию
+    if session.get::<UserSession>("user_data").ok().flatten().is_none() {
+        return Err(actix_web::error::ErrorUnauthorized("Invalid session"));
     }
+
+    // Продолжаем обработку запроса
+    next.call(req).await
 }
 
 #[derive(Serialize, Deserialize, Debug)]
