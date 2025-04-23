@@ -15,10 +15,8 @@ pub async fn get_user_handler(
     path: web::Path<String>,
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<HttpResponse, AppError> {
-    let uuid = path.into_inner().parse::<Uuid>().map_err(|e| {
-        error!("Invalid UUID format: {}", e);
-        AppError::BadRequest
-    })?;
+    let user_id_str = path.into_inner();
+    let user_id = Uuid::parse_str(&user_id_str).map_err(|_| AppError::BadRequest)?;
 
     let user = web::block(move || {
         let mut conn = pool.get().map_err(|e| {
@@ -26,7 +24,7 @@ pub async fn get_user_handler(
             AppError::InternalServerError
         })?;
 
-        User::get_user_by_id(&mut conn, uuid).map_err(|e| {
+        User::get_user_by_id(&mut conn, user_id).map_err(|e| {
             error!("Database query error: {}", e);
             AppError::DatabaseError
         })
@@ -41,7 +39,7 @@ pub async fn get_user_handler(
             let user_data = UserData::new(&user);
             Ok(HttpResponse::Ok().json(user_data))
         }
-        Ok(None) => Ok(HttpResponse::NotFound().json("User not found")),
+        Ok(None) => Err(AppError::NotFound),
         Err(err) => {
             error!("Database query error: {}", err);
             Err(AppError::InternalServerError)
@@ -87,17 +85,15 @@ pub async fn delete_user_handler(
     path: web::Path<String>,
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<HttpResponse, AppError> {
-    let uuid = path.into_inner().parse::<Uuid>().map_err(|e| {
-        error!("Invalid UUID format: {}", e);
-        AppError::BadRequest
-    })?;
+    let user_id_str = path.into_inner();
+    let user_id = Uuid::parse_str(&user_id_str).map_err(|_| AppError::BadRequest)?;
     let deleted_user = web::block(move || {
         let mut conn = pool.get().map_err(|e| {
             error!("Failed to get database connection: {}", e);
             AppError::InternalServerError
         })?; // TODO: fix this shit...
-        debug!("Try to delete user with id {}", uuid);
-        User::delete_user(&mut conn, uuid).map_err(|e| {
+        debug!("Try to delete user with id {}", user_id);
+        User::delete_user(&mut conn, user_id).map_err(|e| {
             error!("Database query error: {}", e);
             AppError::DatabaseError
         })
