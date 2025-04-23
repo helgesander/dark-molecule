@@ -35,18 +35,6 @@ pub struct AppErrorJson {
     pub error: &'static str,
 }
 
-// impl From<AppError> for actix_web::Error {
-//     fn from(err: AppError) -> Self {
-//         match err {
-//             AppError::UnauthorizedError => actix_web::error::ErrorUnauthorized("Unauthorized"),
-//             AppError::InternalServerError => {
-//                 error::ErrorInternalServerError("Internal server error")
-//             }
-//             _ => error::ErrorInternalServerError("Internal server error"),
-//         }
-//     }
-// }
-
 impl From<R2D2Error> for AppError {
     fn from(error: R2D2Error) -> Self {
         error!("Database pool error: {}", error);

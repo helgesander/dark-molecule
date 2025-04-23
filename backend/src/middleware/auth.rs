@@ -5,6 +5,7 @@ use actix_web::Error;
 use actix_web::middleware::Next;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::utils::errors::AppError;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Role {
@@ -20,16 +21,14 @@ pub async fn auth_middleware(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
 ) -> Result<ServiceResponse<impl MessageBody>, Error> {
-    // Получаем сессию
     let session = req.get_session();
 
-    // Проверяем авторизацию
     if session.get::<UserSession>("user_data").ok().flatten().is_none() {
-        return Err(actix_web::error::ErrorUnauthorized("Invalid session"));
+        return Err(AppError::UnauthorizedError.into());
     }
 
-    // Продолжаем обработку запроса
     next.call(req).await
+        .map_err(|_| AppError::InternalServerError.into())
 }
 
 #[derive(Serialize, Deserialize, Debug)]
