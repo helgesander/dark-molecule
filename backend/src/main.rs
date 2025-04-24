@@ -1,7 +1,6 @@
 extern crate diesel;
 
 use crate::routes::init_routes;
-use crate::services::nuclei_service::NucleiService;
 use crate::utils::config::AppConfig;
 use crate::utils::errors::AppErrorJson;
 use actix_session::storage::CookieSessionStore;

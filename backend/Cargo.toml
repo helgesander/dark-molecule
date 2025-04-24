@@ -29,6 +29,7 @@ tokio = "1.43.0"
 thiserror = "2.0.11"
 actix-multipart = "0.7.2"
 mime = "0.3.17"
+async-trait = "0.1.86"
 
 [dev-dependencies]
 dotenv = "0.15.0"
