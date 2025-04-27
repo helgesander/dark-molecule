@@ -35,7 +35,11 @@ fn init_report_routes(cfg: &mut web::ServiceConfig) {
 }
 
 fn init_auth_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/auth").service(auth_handlers::auth_handler));
+    cfg.service(
+        web::scope("/auth")
+            .service(auth_handlers::auth_handler)
+            .service(auth_handlers::logout_handler)
+    );
 }
 
 fn init_user_routes(cfg: &mut web::ServiceConfig) {

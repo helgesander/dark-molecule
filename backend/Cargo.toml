@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 actix-web = "4"
 actix-session = { version = "0.10.1", features = ["cookie-session"] }
+actix-cors = "0.7"
 env_logger = "0.11.6"
 diesel = { version = "2.2.0", features = ["postgres", "uuid", "chrono", "serde_json", "r2d2"] }
 uuid = { version = "1.11.0" , features = ["v4", "fast-rng", "macro-diagnostics", "serde"]}

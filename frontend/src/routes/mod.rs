@@ -9,7 +9,7 @@ mod admin;
 mod profile;
 mod project;
 
-#[derive(Clone, Routable, PartialEq)]
+#[derive(Clone, Debug, Routable, PartialEq)]
 pub enum MainRoute {
     #[at("/projects")]
     Projects,

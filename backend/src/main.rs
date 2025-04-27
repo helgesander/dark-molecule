@@ -4,9 +4,10 @@ use crate::routes::init_routes;
 use crate::services::nuclei_service::NucleiService;
 use crate::utils::config::AppConfig;
 use crate::utils::errors::AppErrorJson;
+use actix_cors::Cors;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
-use actix_web::cookie::Key;
+use actix_web::cookie::{Key, SameSite};
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpResponse, HttpServer};
@@ -55,7 +56,15 @@ async fn main() -> std::io::Result<()> {
 
     let nuclei_service = NucleiService::new(config.scans_path.clone());
     HttpServer::new(move || {
+        let cors = Cors::default()
+            // .allowed_origin("http://localhost:8080") // Замените на ваш домен фронтенда
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+            .allowed_headers(vec!["Content-Type", "Authorization"])
+            .supports_credentials()
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .app_data(Data::new(pool.clone()))
             .app_data(Data::new(config.clone()))
             .app_data(Data::new(nuclei_service.clone()))
@@ -66,7 +75,9 @@ async fn main() -> std::io::Result<()> {
                     config.secret_key.clone(),
                 )
                 .cookie_name("session".parse().unwrap())
-                // .cookie_max_age(time::Duration::hours(2)) // TODO: try it later
+                .cookie_secure(false) // В development можно false, в production должно быть true
+                // .cookie_same_site(SameSite::Strict)
+                .cookie_http_only(true)
                 .build(),
             )
             .configure(init_routes)
