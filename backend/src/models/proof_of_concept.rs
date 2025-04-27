@@ -66,7 +66,7 @@ impl ProofOfConcept {
             .select(description)
             .first::<String>(conn)?;
         Ok(PocMetadata {
-            description: poc_metadata
+            description: poc_metadata,
         })
     }
 
@@ -87,7 +87,7 @@ impl ProofOfConcept {
             .get_result::<ProofOfConcept>(conn)
     }
 
-    pub fn get_poc_data(conn: &mut PgConnection,  poc_id: i32) -> QueryResult<PocData> {
+    pub fn get_poc_data(conn: &mut PgConnection, poc_id: i32) -> QueryResult<PocData> {
         use crate::db::schema::proof_of_concepts::dsl::*;
         let (poc_data, poc_mime_type) = proof_of_concepts
             .filter(id.eq(poc_id))

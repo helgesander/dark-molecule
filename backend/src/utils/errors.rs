@@ -111,7 +111,7 @@ impl error::ResponseError for AppError {
             AppError::MultipartError => HttpResponse::BadRequest().json(AppErrorJson {
                 status: 400,
                 error: "Multipart Error",
-            })
+            }),
         }
     }
 }

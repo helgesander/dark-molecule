@@ -1,10 +1,10 @@
-use actix_web::middleware::from_fn;
 use crate::handlers::{
     admin_handlers, auth_handlers, project_handlers, report_handlers, scan_handlers, team_handlers,
     user_handlers,
 };
-use actix_web::web;
 use crate::middleware::auth::auth_middleware;
+use actix_web::middleware::from_fn;
+use actix_web::web;
 
 // TODO: add auth wrappers for all routes
 fn init_project_routes(cfg: &mut web::ServiceConfig) {
@@ -29,6 +29,7 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
 fn init_report_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/report")
+            .wrap(from_fn(auth_middleware))
             .service(report_handlers::create_report_handler)
             .service(report_handlers::get_report_handler),
     );
@@ -41,7 +42,7 @@ fn init_auth_routes(cfg: &mut web::ServiceConfig) {
 fn init_user_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/user")
-            // .wrap(from_fn(auth_middleware))
+            .wrap(from_fn(auth_middleware))
             .service(user_handlers::create_user_handler)
             .service(user_handlers::get_users_handler)
             .service(user_handlers::delete_user_handler)
@@ -52,6 +53,7 @@ fn init_user_routes(cfg: &mut web::ServiceConfig) {
 fn init_team_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/team")
+            .wrap(from_fn(auth_middleware))
             .service(team_handlers::create_team_handler)
             .service(team_handlers::get_teams_handler)
             .service(team_handlers::get_team_handler),
@@ -59,14 +61,17 @@ fn init_team_routes(cfg: &mut web::ServiceConfig) {
 }
 
 fn init_admin_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/admin").service(admin_handlers::get_admin_settings_handler));
+    cfg.service(web::scope("/admin").wrap(from_fn(auth_middleware)).service(admin_handlers::get_admin_settings_handler));
 }
 
 fn init_scan_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/scan")
-            .service(scan_handlers::get_scan_handler)
-            .service(scan_handlers::create_scan_handler),
+            .wrap(from_fn(auth_middleware))
+            .service(scan_handlers::start_nuclei_scan)
+            .service(scan_handlers::start_nmap_scan)
+            .service(scan_handlers::start_gowitness_scan)
+            .service(scan_handlers::get_scan_status),
     );
 }
 

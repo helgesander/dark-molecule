@@ -25,6 +25,8 @@ mod routes;
 mod services;
 mod utils;
 
+use crate::services::state::AppState;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // use self::db::schema::users::dsl::*;
@@ -52,12 +54,13 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Can't create pool");
 
-    let nuclei_service = NucleiService::new(config.scans_path.clone());
+    let app_state = AppState::new(pool.clone(), config.clone());
+
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(pool.clone()))
             .app_data(Data::new(config.clone()))
-            .app_data(Data::new(nuclei_service.clone()))
+            .app_data(Data::new(app_state.clone()))
             .wrap(Logger::default())
             .wrap(
                 SessionMiddleware::builder(

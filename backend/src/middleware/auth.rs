@@ -1,11 +1,11 @@
+use crate::utils::errors::AppError;
 use actix_session::SessionExt;
 use actix_web::body::MessageBody;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse};
-use actix_web::Error;
 use actix_web::middleware::Next;
+use actix_web::Error;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::utils::errors::AppError;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Role {
@@ -13,7 +13,6 @@ pub enum Role {
     User,
     Guest,
 }
-
 
 // TODO: fix to AppError later
 
@@ -23,11 +22,17 @@ pub async fn auth_middleware(
 ) -> Result<ServiceResponse<impl MessageBody>, Error> {
     let session = req.get_session();
 
-    if session.get::<UserSession>("user_data").ok().flatten().is_none() {
+    if session
+        .get::<UserSession>("user_data")
+        .ok()
+        .flatten()
+        .is_none()
+    {
         return Err(AppError::UnauthorizedError.into());
     }
 
-    next.call(req).await
+    next.call(req)
+        .await
         .map_err(|_| AppError::InternalServerError.into())
 }
 

@@ -1,10 +1,10 @@
-use actix_multipart::Multipart;
 use crate::dtos::handlers::{HostForm, IssueForm, ProjectForm, ProofOfConceptForm};
 use crate::models::host::Host;
 use crate::models::issue::Issue;
 use crate::models::project::Project;
 use crate::models::proof_of_concept::ProofOfConcept;
 use crate::utils::errors::AppError;
+use actix_multipart::Multipart;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
@@ -328,7 +328,8 @@ pub async fn create_poc_handler(
 
     // Обрабатываем multipart данные
     while let Some(mut field) = payload.try_next().await? {
-        let field_name = field.content_disposition()
+        let field_name = field
+            .content_disposition()
             .and_then(|cd| cd.get_name().map(|s| s.to_string()))
             .unwrap_or_default();
 
@@ -336,10 +337,10 @@ pub async fn create_poc_handler(
             "description" => {
                 // Читаем текстовое поле description
                 while let Some(chunk) = field.try_next().await? {
-                    description = String::from_utf8(chunk.to_vec())
-                        .map_err(|_| AppError::BadRequest)?;
+                    description =
+                        String::from_utf8(chunk.to_vec()).map_err(|_| AppError::BadRequest)?;
                 }
-            },
+            }
             "file" => {
                 // Определяем MIME тип файла
                 if let Some(content_type) = field.content_type() {
@@ -350,7 +351,7 @@ pub async fn create_poc_handler(
                 while let Some(chunk) = field.try_next().await? {
                     data.extend_from_slice(&chunk);
                 }
-            },
+            }
             _ => continue,
         }
     }
@@ -378,11 +379,10 @@ pub async fn create_poc_handler(
             AppError::DatabaseError
         })
     })
-        .await??;
+    .await??;
 
     Ok(HttpResponse::Created().json(poc))
 }
-
 
 #[get("/{project_id}/issue/{issue_id}/poc/{poc_id}")]
 pub async fn get_poc_metadata_handler(
@@ -399,15 +399,15 @@ pub async fn get_poc_metadata_handler(
             error!("Failed to get poc: {}", e);
             AppError::DatabaseError
         })
-    }).await??;
+    })
+    .await??;
     Ok(HttpResponse::Ok().json(poc_metadata))
 }
-
 
 #[get("/{project_id}/issue/{issue_id}/poc/{poc_id}/data")]
 pub async fn get_poc_data_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    path: web::Path<(String, String, i32)>
+    path: web::Path<(String, String, i32)>,
 ) -> Result<HttpResponse, AppError> {
     let (_, _, poc_id) = path.into_inner();
     let poc_data = web::block(move || {
@@ -419,8 +419,14 @@ pub async fn get_poc_data_handler(
             error!("Failed to get poc data: {}", e);
             AppError::DatabaseError
         })
-    }).await??;
+    })
+    .await??;
     Ok(HttpResponse::Ok()
-        .content_type(poc_data.mime_type.parse::<mime::Mime>().unwrap_or(mime::APPLICATION_OCTET_STREAM))
+        .content_type(
+            poc_data
+                .mime_type
+                .parse::<mime::Mime>()
+                .unwrap_or(mime::APPLICATION_OCTET_STREAM),
+        )
         .body(poc_data.data))
 }
