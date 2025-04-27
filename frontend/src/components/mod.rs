@@ -3,3 +3,4 @@ use yew::prelude::*;
 pub mod project;
 pub mod navbar;
 pub mod footer;
+pub mod login_form;

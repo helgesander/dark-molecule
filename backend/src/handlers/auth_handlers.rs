@@ -8,6 +8,7 @@ use diesel::PgConnection;
 use log::error;
 use serde::Deserialize;
 use validator::Validate;
+use uuid::Uuid;
 
 #[derive(Deserialize, Validate)]
 struct LoginForm {
@@ -15,6 +16,31 @@ struct LoginForm {
     pub email: String,
     pub password: String,
 }
+
+#[derive(serde::Serialize)]
+struct LoginResponse {
+    user: UserData,
+}
+
+#[derive(serde::Serialize)]
+struct UserData {
+    id: Uuid,
+    username: String,
+    email: String,
+    is_admin: bool,
+}
+
+impl From<&User> for UserData {
+    fn from(user: &User) -> Self {
+        Self {
+            id: user.id,
+            username: user.username.clone(),
+            email: user.email.clone(),
+            is_admin: user.is_admin,
+        }
+    }
+}
+
 #[post("/")]
 pub async fn auth_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -47,10 +73,18 @@ pub async fn auth_handler(
                 )
                 .map_err(|e| {
                     error!("Troubles with session");
-                    AppError::DatabaseError // TODO: i think need change this
+                    AppError::DatabaseError
                 })?;
-            Ok(HttpResponse::Ok().json("success"))
+            Ok(HttpResponse::Ok().json(LoginResponse {
+                user: UserData::from(&user),
+            }))
         }
         None => Ok(HttpResponse::Unauthorized().json("User not found")),
     }
+}
+
+#[post("/logout")]
+pub async fn logout_handler(session: Session) -> Result<HttpResponse, AppError> {
+    session.clear();
+    Ok(HttpResponse::Ok().json("success"))
 }

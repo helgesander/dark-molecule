@@ -85,10 +85,12 @@ dependencies = [
 name = "dark-molecule-frontend"
 version = "0.1.0"
 dependencies = [
+ "gloo 0.10.0",
  "gloo-net 0.6.0",
  "serde",
  "uuid",
  "wasm-bindgen-futures",
+ "web-sys",
  "yew",
  "yew-router",
 ]
@@ -224,6 +226,25 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
 name = "gloo"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd35526c28cc55c1db77aed6296de58677dbab863b118483a27845631d870249"
+dependencies = [
+ "gloo-console",
+ "gloo-dialogs",
+ "gloo-events",
+ "gloo-file",
+ "gloo-history",
+ "gloo-net 0.4.0",
+ "gloo-render",
+ "gloo-storage",
+ "gloo-timers",
+ "gloo-utils",
+ "gloo-worker 0.4.0",
+]
+
+[[package]]
+name = "gloo"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d15282ece24eaf4bd338d73ef580c6714c8615155c4190c781290ee3fa0fd372"
@@ -238,7 +259,7 @@ dependencies = [
  "gloo-storage",
  "gloo-timers",
  "gloo-utils",
- "gloo-worker",
+ "gloo-worker 0.5.0",
 ]
 
 [[package]]
@@ -301,6 +322,27 @@ dependencies = [
  "serde_urlencoded",
  "thiserror 1.0.69",
  "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "gloo-net"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ac9e8288ae2c632fa9f8657ac70bfe38a1530f345282d7ba66a1f70b72b7dc4"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "futures-sink",
+ "gloo-utils",
+ "http 0.2.12",
+ "js-sys",
+ "pin-project",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
 ]
 
@@ -393,6 +435,25 @@ dependencies = [
  "serde",
  "serde_json",
  "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "gloo-worker"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76495d3dd87de51da268fa3a593da118ab43eb7f8809e17eb38d3319b424e400"
+dependencies = [
+ "bincode",
+ "futures",
+ "gloo-utils",
+ "gloo-worker-macros",
+ "js-sys",
+ "pinned",
+ "serde",
+ "thiserror 1.0.69",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
 ]
 
@@ -898,7 +959,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "decf97738ce15b9e9cc1671ea29b0f6c56538719e1a092d19cc2134bf144e40e"
 dependencies = [
  "futures",
- "gloo",
+ "gloo 0.11.0",
  "num_cpus",
  "once_cell",
  "pin-project",
@@ -1184,7 +1245,7 @@ source = "git+https://github.com/yewstack/yew/#910efccf58a2c06d6129d1a18d79168d4
 dependencies = [
  "console_error_panic_hook",
  "futures",
- "gloo",
+ "gloo 0.11.0",
  "implicit-clone",
  "indexmap",
  "js-sys",
@@ -1219,7 +1280,7 @@ name = "yew-router"
 version = "0.18.0"
 source = "git+https://github.com/yewstack/yew/#910efccf58a2c06d6129d1a18d79168d4e36864b"
 dependencies = [
- "gloo",
+ "gloo 0.11.0",
  "js-sys",
  "route-recognizer",
  "serde",

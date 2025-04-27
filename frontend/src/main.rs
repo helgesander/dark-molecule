@@ -1,17 +1,20 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
-use crate::components::footer::Footer;
+use crate::routes::{MainRoute, switch_main};
+use crate::context::user_provider::UserProvider;
 
-mod routes;
 mod components;
 mod pages;
+mod routes;
+mod context;
 
-#[function_component]
-fn App() -> Html {
+#[function_component(App)]
+fn app() -> Html {
     html! {
         <BrowserRouter>
-            <Switch<routes::MainRoute> render={routes::switch_main} />
-            <Footer />
+            <UserProvider>
+                <Switch<MainRoute> render={switch_main} />
+            </UserProvider>
         </BrowserRouter>
     }
 }
