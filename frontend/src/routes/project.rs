@@ -1,5 +1,6 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
+use crate::pages::projects::ProjectsPage;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum ProjectRoute {
@@ -13,7 +14,7 @@ pub enum ProjectRoute {
 
 pub fn switch_project(route: ProjectRoute) -> Html {
     match route {
-        ProjectRoute::Projects => html! {<h1>{"Projects"}</h1>},
+        ProjectRoute::Projects => html! {<ProjectsPage />},
         ProjectRoute::Project => html! { <h1>{"Edit Project"}</h1> },
         ProjectRoute::ProjectEdit => html! { <h1>{"Project"}</h1> }
     }

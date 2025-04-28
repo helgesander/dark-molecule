@@ -52,9 +52,11 @@ pub struct ProjectFullResponse {
 
 #[derive(Serialize)]
 pub struct ProjectOverviewResponse {
+    pub id: Uuid,
     pub name: String,
     pub scope: Option<String>,
 }
+
 
 impl Project {
     pub fn get_project_by_id(
@@ -76,6 +78,9 @@ impl Project {
     pub fn get_project_by_name(conn: &mut PgConnection, name: String) {
         unimplemented!()
     }
+        
+        
+
 
     pub fn get_projects(conn: &mut PgConnection) -> QueryResult<Vec<ProjectOverviewResponse>> {
         use crate::db::schema::projects::dsl::*;
@@ -83,6 +88,7 @@ impl Project {
         let mut result: Vec<ProjectOverviewResponse> = Vec::new();
         for project in all_projects {
             result.push(ProjectOverviewResponse {
+                id: project.id,
                 name: project.name.clone(),
                 scope: project.scope,
             });

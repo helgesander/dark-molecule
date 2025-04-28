@@ -36,7 +36,7 @@ pub enum MainRoute {
 
 pub fn switch_main(route: MainRoute) -> Html {
     match route {
-        MainRoute::Projects => html! { <h1>{ "Projects" }</h1> },
+        MainRoute::Projects => html! { <Switch<project::ProjectRoute> render={ project::switch_project }/> },
         MainRoute::ProjectRoot | MainRoute::Project => html! { <Switch<project::ProjectRoute> render={ project::switch_project }/>},
         MainRoute::Login => html! {<LoginPage />},
         MainRoute::Register => html! {<RegisterPage />},

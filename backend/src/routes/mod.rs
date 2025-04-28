@@ -1,6 +1,6 @@
 use actix_web::middleware::from_fn;
 use crate::handlers::{
-    admin_handlers, auth_handlers, project_handlers, report_handlers, scan_handlers, team_handlers,
+    admin_handlers, auth_handlers, project_handlers, report_handlers, team_handlers,
     user_handlers,
 };
 use actix_web::web;
@@ -66,13 +66,13 @@ fn init_admin_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(web::scope("/admin").service(admin_handlers::get_admin_settings_handler));
 }
 
-fn init_scan_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/scan")
-            .service(scan_handlers::get_scan_handler)
-            .service(scan_handlers::create_scan_handler),
-    );
-}
+// fn init_scan_routes(cfg: &mut web::ServiceConfig) {
+//     cfg.service(
+//         web::scope("/scan")
+//             .service(scan_handlers::get_scan_handler)
+//             .service(scan_handlers::create_scan_handler),
+//     );
+// }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -81,7 +81,7 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
             .configure(init_project_routes)
             .configure(init_auth_routes)
             .configure(init_admin_routes)
-            .configure(init_scan_routes)
+            // .configure(init_scan_routes)
             .configure(init_team_routes),
     );
 }

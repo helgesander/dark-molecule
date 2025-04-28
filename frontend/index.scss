@@ -268,3 +268,59 @@ footer {
         transform: translateY(0);
     }
 }
+
+.project-list {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    h2 {
+        color: $primary-color;
+        margin-bottom: 30px;
+        font-size: 2rem;
+    }
+
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .project-card {
+        background-color: $input-background;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        h3 {
+            color: $primary-color;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .description {
+            color: $text-color;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .project-details {
+            p {
+                margin: 5px 0;
+                color: $text-color;
+                font-size: 0.9rem;
+
+                strong {
+                    color: $primary-color;
+                    margin-right: 5px;
+                }
+            }
+        }
+    }
+}

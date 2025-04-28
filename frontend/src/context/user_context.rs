@@ -1,13 +1,10 @@
 use yew::prelude::*;
+use std::rc::Rc;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct User {
-    pub id: Uuid,
     pub username: String,
-    pub email: String,
-    pub is_admin: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -16,12 +13,21 @@ pub struct UserContext {
     pub set_user: Callback<Option<User>>,
 }
 
-impl UserContext {
-    pub fn new(user: Option<User>, set_user: Callback<Option<User>>) -> Self {
-        Self { user, set_user }
+impl Reducible for UserContext {
+    type Action = Option<User>;
+
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        Self {
+            user: action,
+            set_user: self.set_user.clone(),
+        }
+        .into()
     }
 }
 
-pub fn use_user_context() -> UserContext {
-    use_context::<UserContext>().expect("UserContext not found")
+pub fn use_user_context() -> impl Hook<Output = UseReducerHandle<UserContext>> {
+    use_reducer(|| UserContext {
+        user: None,
+        set_user: Callback::default(),
+    })
 } 

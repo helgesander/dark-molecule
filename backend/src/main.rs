@@ -1,7 +1,6 @@
 extern crate diesel;
 
 use crate::routes::init_routes;
-use crate::services::nuclei_service::NucleiService;
 use crate::utils::config::AppConfig;
 use crate::utils::errors::AppErrorJson;
 use actix_cors::Cors;
@@ -17,6 +16,7 @@ use dotenv::dotenv;
 use env_logger::Env;
 use std::env;
 use std::time::Duration;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 mod db;
 mod dtos;
@@ -24,8 +24,9 @@ mod handlers;
 mod middleware;
 mod models;
 mod routes;
-mod services;
+// mod services;
 mod utils;
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -46,28 +47,21 @@ async fn main() -> std::io::Result<()> {
     let config = AppConfig::new().expect("Can't load config");
     env_logger::init_from_env(Env::default().default_filter_or(config.log_level.clone()));
 
-    let manager = ConnectionManager::<PgConnection>::new(config.database_url.clone());
+    let pool = db::establish_connection();
 
-    let pool = Pool::builder()
-        .max_size(15)
-        .connection_timeout(Duration::from_secs(30))
-        .build(manager)
-        .expect("Can't create pool");
-
-    let nuclei_service = NucleiService::new(config.scans_path.clone());
+    // let nuclei_service = NucleiService::new(config.scans_path.clone());
     HttpServer::new(move || {
         let cors = Cors::default()
-            // .allowed_origin("http://localhost:8080") // Замените на ваш домен фронтенда
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-            .allowed_headers(vec!["Content-Type", "Authorization"])
-            .supports_credentials()
-            .max_age(3600);
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .supports_credentials();
 
         App::new()
             .wrap(cors)
             .app_data(Data::new(pool.clone()))
             .app_data(Data::new(config.clone()))
-            .app_data(Data::new(nuclei_service.clone()))
+            // .app_data(Data::new(nuclei_service.clone()))
             .wrap(Logger::default())
             .wrap(
                 SessionMiddleware::builder(
@@ -76,8 +70,7 @@ async fn main() -> std::io::Result<()> {
                 )
                 .cookie_name("session".parse().unwrap())
                 .cookie_secure(false) // В development можно false, в production должно быть true
-                // .cookie_same_site(SameSite::Strict)
-                .cookie_http_only(true)
+                // .cookie_http_only(true)
                 .build(),
             )
             .configure(init_routes)
