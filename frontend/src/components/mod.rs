@@ -1,6 +1,7 @@
 use yew::prelude::*;
 
-pub mod project;
 pub mod navbar;
 pub mod footer;
-pub mod login_form;
+pub mod project_sidebar;
+pub mod project_hosts;
+pub mod project_issues;

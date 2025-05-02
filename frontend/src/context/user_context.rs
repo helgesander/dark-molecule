@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct User {
     pub username: String,
+    pub email: String,
+    pub is_admin: bool,
+    pub avatar: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

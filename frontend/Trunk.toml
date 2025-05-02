@@ -9,3 +9,6 @@ port = 8080
 aliases = [ "http://localhost.darkmolecule.com" ]
 headers = { "X-Frame-Options" = "DENY", "X-XSS-Protection" = "1; mode: block;", "X-Content-Type-Options" = "nosniff", "Strict-Transport-Security" = "max-age=63072000; includeSubDomains; preload" }
 
+[log]
+level = "debug"
+

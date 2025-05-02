@@ -6,7 +6,7 @@ use crate::components::navbar::Navbar;
 pub fn main_page() -> Html {
     html! {
         <div class="container">
-            <Navbar />
+        <h1>{"Главная страница"}</h1>
         </div>
     }
 }
