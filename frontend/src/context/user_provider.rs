@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use crate::context::user_context::{User, UserContext};
+use crate::context::user_context::{UserContext, create_user_context};
 
 #[derive(Properties, PartialEq)]
 pub struct UserProviderProps {
@@ -9,21 +9,10 @@ pub struct UserProviderProps {
 
 #[function_component(UserProvider)]
 pub fn user_provider(props: &UserProviderProps) -> Html {
-    let user = use_state(|| None::<User>);
-    let set_user = {
-        let user = user.clone();
-        Callback::from(move |new_user: Option<User>| {
-            user.set(new_user);
-        })
-    };
-
-    let context = UserContext {
-        user: (*user).clone(),
-        set_user,
-    };
+    let user_ctx = use_reducer(|| create_user_context());
 
     html! {
-        <ContextProvider<UserContext> context={context}>
+        <ContextProvider<UserContext> context={user_ctx}>
             {props.children.clone()}
         </ContextProvider<UserContext>>
     }

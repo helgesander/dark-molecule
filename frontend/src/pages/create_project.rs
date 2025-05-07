@@ -1,11 +1,10 @@
 use yew::prelude::*;
 use gloo::console::log;
-use crate::components::navbar::Navbar;
-use crate::components::footer::Footer;
 use crate::api::{ApiClient, Team};
 use uuid::Uuid;
 use yew_router::prelude::*;
 use crate::routes::project::ProjectRoute;
+use web_sys::HtmlElement;
 
 #[derive(serde::Serialize)]
 pub struct CreateProjectRequest {
@@ -31,11 +30,14 @@ pub fn create_project_page() -> Html {
             let error = error.clone();
 
             wasm_bindgen_futures::spawn_local(async move {
+                log!("Fetching teams...");
                 match ApiClient::get().get_teams().await {
                     Ok(data) => {
+                        log!("Received teams:", format!("{:?}", data));
                         teams.set(data);
                     }
                     Err(e) => {
+                        log!("Error fetching teams:", &e);
                         let error_message = format!("Ошибка при загрузке команд: {}", e);
                         error.set(error_message);
                     }
@@ -48,7 +50,7 @@ pub fn create_project_page() -> Html {
     let on_team_change = {
         let selected_team = selected_team.clone();
         Callback::from(move |e: Event| {
-            let input = e.target_dyn_into::<web_sys::HtmlElement>().unwrap();
+            let input = e.target_dyn_into::<HtmlElement>().unwrap();
             if let Some(value) = input.get_attribute("value") {
                 if let Ok(id) = Uuid::parse_str(&value) {
                     selected_team.set(Some(id));
@@ -79,8 +81,8 @@ pub fn create_project_page() -> Html {
         let selected_team = selected_team.clone();
         let error = error.clone();
         let navigator = navigator.clone();
-        Callback::from(move |e: SubmitEvent| {
-            e.prevent_default();
+        Callback::from(move |_| {
+            log!("Submitting project creation...");
             if let Some(team_id) = *selected_team {
                 let project_name = project_name.to_string();
                 let project_scope = if project_scope.is_empty() {
@@ -91,14 +93,17 @@ pub fn create_project_page() -> Html {
                 let error = error.clone();
                 let navigator = navigator.clone();
                 wasm_bindgen_futures::spawn_local(async move {
+                    log!("Creating project with name:", &project_name);
                     match ApiClient::get()
                         .create_project(project_name, project_scope, team_id)
                         .await
                     {
                         Ok(_) => {
+                            log!("Project created successfully");
                             navigator.push(&ProjectRoute::Projects);
                         }
                         Err(e) => {
+                            log!("Error creating project:", &e);
                             let error_message = format!("Ошибка при создании проекта: {}", e);
                             error.set(error_message);
                         }
@@ -110,54 +115,55 @@ pub fn create_project_page() -> Html {
         })
     };
 
+    let on_cancel = {
+        let navigator = navigator.clone();
+        Callback::from(move |_| navigator.push(&ProjectRoute::Projects))
+    };
+
     html! {
-        <>
-            <div class="content">
-                <div class="create-project-container">
-                    <h1>{"Создание проекта"}</h1>
-                    if !error.is_empty() {
-                        <div class="error-message">{error.to_string()}</div>
-                    }
-                    <form onsubmit={on_submit}>
-                        <div class="input-group">
-                            <label for="team">{"Команда"}</label>
-                            <select id="team" onchange={on_team_change}>
-                                <option value="">{"Выберите команду"}</option>
-                                {for teams.iter().map(|team| {
-                                    html! {
-                                        <option value={team.id.to_string()}>{&team.name}</option>
-                                    }
-                                })}
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label for="name">{"Название проекта"}</label>
-                            <input
-                                type="text"
-                                id="name"
-                                value={project_name.to_string()}
-                                oninput={on_name_change}
-                                required=true
-                            />
-                        </div>
-                        <div class="input-group">
-                            <label for="scope">{"Описание проекта"}</label>
-                            <input
-                                type="text"
-                                id="scope"
-                                value={project_scope.to_string()}
-                                oninput={on_scope_change}
-                            />
-                        </div>
-                        <div class="form-buttons">
-                            <button type="submit" class="button">{"Создать"}</button>
-                            <button type="button" class="button secondary" onclick={Callback::from(move |_| navigator.push(&ProjectRoute::Projects))}>
-                                {"Отмена"}
-                            </button>
-                        </div>
-                    </form>
+        <div class="create-project-page">
+            <div class="create-project-form">
+                <h2>{"Создание проекта"}</h2>
+                if !error.is_empty() {
+                    <div class="error-message">{error.to_string()}</div>
+                }
+                <div class="form-group">
+                    <label for="team">{"Команда"}</label>
+                    <select id="team" onchange={on_team_change}>
+                        <option value="">{"Выберите команду"}</option>
+                        {for teams.iter().map(|team| {
+                            html! {
+                                <option value={team.id.to_string()}>{&team.name}</option>
+                            }
+                        })}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="name">{"Название проекта"}</label>
+                    <input
+                        type="text"
+                        id="name"
+                        value={project_name.to_string()}
+                        oninput={on_name_change}
+                        placeholder="Введите название проекта"
+                        required=true
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="scope">{"Область действия"}</label>
+                    <input
+                        type="text"
+                        id="scope"
+                        value={project_scope.to_string()}
+                        oninput={on_scope_change}
+                        placeholder="Например: *.site.org"
+                    />
+                </div>
+                <div class="form-buttons">
+                    <button onclick={on_cancel} class="button secondary">{"Отмена"}</button>
+                    <button onclick={on_submit} class="button">{"Создать"}</button>
                 </div>
             </div>
-        </>
+        </div>
     }
 } 

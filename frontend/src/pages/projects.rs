@@ -60,8 +60,10 @@ pub fn projects_page() -> Html {
             <div class="content">
                 <div class="project-list">
                     <div class="projects-header">
-                        <h1>{"Проекты"}</h1>
-                        <button onclick={on_create_click} class="button">{"Создать проект"}</button>
+                        <button onclick={on_create_click} class="create-project-button">
+                            <img src="/static/icons/plus.svg" class="icon" alt="Создать" />
+                            {"Создать проект"}
+                        </button>
                     </div>
                     if !error.is_empty() {
                         <div class="error-message">{error.to_string()}</div>

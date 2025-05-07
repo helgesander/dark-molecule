@@ -2,7 +2,8 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use crate::routes::main::MainRoute;
 use crate::api::{ApiClient, User};
-use crate::context::user_context::{use_user_context, User as ContextUser};
+use crate::context::user_context::{from_api_to_context, UserContext};
+use gloo::console::log;
 
 #[function_component(LoginPage)]
 pub fn login_page() -> Html {
@@ -10,7 +11,15 @@ pub fn login_page() -> Html {
     let password = use_state(|| String::new());
     let error = use_state(|| String::new());
     let navigator = use_navigator().unwrap();
-    let user_context = use_user_context();
+    let user_context = use_context::<UserContext>().unwrap();
+
+    {
+        let user_context_clone = user_context.clone();
+        use_effect_with_deps(move |_| {
+            log!("LoginPage: current user context:", format!("{:?}", &user_context_clone));
+            || {}
+        }, ());
+    }
 
     let on_email_change = {
         let email = email.clone();
@@ -28,12 +37,6 @@ pub fn login_page() -> Html {
         })
     };
 
-    let to_context_user = |u: User| ContextUser {
-        username: u.username,
-        email: u.email,
-        is_admin: u.is_admin,
-        avatar: u.avatar,
-    };
 
     let on_submit = {
         let email = email.clone();
@@ -49,20 +52,25 @@ pub fn login_page() -> Html {
             let navigator = navigator.clone();
             let user_context = user_context.clone();
             wasm_bindgen_futures::spawn_local(async move {
+                log!("LoginPage: attempting login with email:", &email);
                 match ApiClient::get().login(email, password).await {
                     Ok(user) => {
+                        log!("LoginPage: login successful, user:", format!("{:?}", user));
                         let user_id = user.id.to_string();
                         match ApiClient::get().get_user(&user_id).await {
                             Ok(full_user) => {
-                                user_context.dispatch(Some(to_context_user(full_user)));
+                                log!("LoginPage: got full user data:", format!("{:?}", full_user));
+                                user_context.dispatch(from_api_to_context(full_user));
                             }
                             Err(_) => {
-                                user_context.dispatch(Some(to_context_user(user)));
+                                log!("LoginPage: using basic user data");
+                                user_context.dispatch(from_api_to_context(user));
                             }
                         }
                         navigator.push(&MainRoute::Projects);
                     }
                     Err(e) => {
+                        log!("LoginPage: login error:", &e);
                         error.set(e);
                     }
                 }

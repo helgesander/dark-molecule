@@ -5,3 +5,4 @@ pub mod register;
 pub mod projects;
 pub mod create_project;
 pub mod project;
+pub mod edit_issue;

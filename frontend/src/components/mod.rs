@@ -1,7 +1,12 @@
-use yew::prelude::*;
-
 pub mod navbar;
 pub mod footer;
 pub mod project_sidebar;
 pub mod project_hosts;
 pub mod project_issues;
+pub mod project_reports;
+pub mod create_report;
+pub mod issue_create_form;
+pub mod issues_list;
+pub mod project_services;
+pub mod project_settings;
+pub mod severity_icon;

@@ -2,30 +2,28 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use crate::routes::main::{MainRoute, switch_main};
 use wasm_logger;
+use gloo::console::log;
+use crate::components::navbar::Navbar;
+use crate::context::user_context::{UserContext, create_user_context};
 use crate::context::user_provider::UserProvider;
-use crate::components::{
-    navbar::Navbar,
-    footer::Footer
-};
+
 
 mod routes;
 mod pages;
 mod components;
 mod api;
 mod context;
+mod utils;
 
 #[function_component(App)]
 fn app() -> Html {
     html! {
-        <BrowserRouter>
-            <UserProvider>
-                <div class="app-container">
-                    <Navbar />
-                    <Switch<MainRoute> render={switch_main} />
-                    // TODO: maybe add footer here later
-                </div>
-            </UserProvider>
-        </BrowserRouter>
+        <UserProvider>
+            <BrowserRouter>
+                <Navbar />
+                <Switch<MainRoute> render={switch_main} />
+            </BrowserRouter>
+        </UserProvider>
     }
 }
 

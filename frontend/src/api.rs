@@ -13,6 +13,21 @@ pub struct Project {
     pub team_id: Uuid,
     pub hosts: Vec<Host>,
     pub issues: Vec<Issue>,
+    pub reports: Option<Vec<Report>>,
+    pub services: Option<Vec<Service>>,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct Service {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct Report {
+    pub id: Uuid,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -39,10 +54,30 @@ pub struct Host {
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Issue {
     pub id: Uuid,
-    pub title: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub mitigation: Option<String>,
+    pub cvss: f64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct CreateIssueRequest {
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct UpdateIssue {
+    pub name: String,
+    pub description: Option<String>,
+    pub mitigation: Option<String>,
+    pub cvss: f64
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct CreateReportRequest {
+    pub name: String,
     pub description: String,
-    pub severity: String,
-    pub status: String,
+    pub template: String,
 }
 
 #[derive(Serialize)]
@@ -58,7 +93,16 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub is_admin: bool,
-    pub avatar: Option<String>,
+    pub avatar: Option<String>
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct UserForm {
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub username: String,
+    pub email: String,
+    pub password: String,
 }
 
 #[derive(Serialize)]
@@ -69,7 +113,7 @@ pub struct LoginRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct LoginResponse {
-    pub user: User,
+    pub user: User
 }
 
 pub struct ApiClient {
@@ -79,7 +123,7 @@ pub struct ApiClient {
 impl ApiClient {
     pub fn new() -> Self {
         Self {
-            base_url: "http://localhost:8000/api".to_string(),
+            base_url: "http://localhost:8000/api".to_string(), // TODO: add it to AppState 
         }
     }
 
@@ -123,6 +167,22 @@ impl ApiClient {
 
         log::info!("Successfully fetched {} projects", projects.len());
         Ok(projects)
+    }
+
+
+    pub async fn logout(&self) -> Result<(), String> {
+        let response = Request::post(&format!("{}/auth/logout", self.base_url))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        Ok(())
     }
 
     pub async fn get_teams(&self) -> Result<Vec<Team>, String> {
@@ -189,6 +249,10 @@ impl ApiClient {
             .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
 
         if !response.ok() {
+            return Err("Неверный email или пароль".to_string());
+        }
+
+        if response.status() == 401 {
             return Err("Неверный email или пароль".to_string());
         }
 
@@ -306,11 +370,11 @@ impl ApiClient {
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
 
-    pub async fn register(&self, username: String, email: String, password: String) -> Result<User, String> {
+    pub async fn register(&self, form: &UserForm) -> Result<User, String> {
         let response = Request::post(&format!("{}/user/", self.base_url))
             .header("Content-Type", "application/json")
             .credentials(RequestCredentials::Include)
-            .json(&RegisterRequest { username, email, password })
+            .json(form)
             .unwrap()
             .send()
             .await
@@ -324,4 +388,103 @@ impl ApiClient {
             .await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
-}
+
+    pub async fn create_report(&self, project_id: Uuid, report_name: String, report_description: String, report_template: String) -> Result<Report, String> {
+        let request = CreateReportRequest {
+            name: report_name,
+            description: report_description,
+            template: report_template,
+        };
+        
+        let response = Request::post(&format!("{}/project/{}/report/", self.base_url, project_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err("Ошибка при создании отчета".to_string());
+        }
+
+        response.json::<Report>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn get_report(&self, project_id: Uuid, report_id: Uuid) -> Result<Report, String> {
+        let response = Request::get(&format!("{}/project/{}/report/{}/", self.base_url, project_id, report_id)) // TODO: chande path to files
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }   
+
+        response.json::<Report>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn create_issue(&self, project_id: Uuid, name: String) -> Result<Issue, String> {
+        let request = CreateIssueRequest {
+            name,
+        };
+        let response = Request::post(&format!("{}/project/{}/issue", self.base_url, project_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .json(&request)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+        
+        response.json::<Issue>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))    
+    }
+
+    pub async fn get_issue(&self, project_id: Uuid, issue_id: Uuid) -> Result<Issue, String> {
+        let response = Request::get(&format!("{}/project/{}/issue/{}", self.base_url, project_id, issue_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }   
+
+        response.json::<Issue>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn edit_issue(&self, project_id: Uuid, issue_id: Uuid, issue: UpdateIssue) -> Result<Issue, String> {
+
+        let response = Request::put(&format!("{}/project/{}/issue/{}", self.base_url, project_id, issue_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .json(&issue)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        response.json::<Issue>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+}   
