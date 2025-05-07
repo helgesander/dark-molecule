@@ -1,6 +1,6 @@
 use crate::db::schema::issues;
 use crate::db::schema::projects;
-use crate::dtos::handlers::IssueForm;
+use crate::dtos::handlers::{IssueForm, CreateIssueForm};
 use crate::models::host::Host;
 use crate::models::project::Project;
 use crate::models::proof_of_concept::ProofOfConcept;
@@ -20,7 +20,7 @@ pub struct Issue {
     pub description: Option<String>,
     pub mitigation: Option<String>,
     pub cvss: f64,
-    pub project_id: Uuid,
+    pub project_id: Uuid, // TODO: remove
 }
 
 #[derive(Insertable, Deserialize, AsChangeset, Debug)]
@@ -64,15 +64,15 @@ impl Issue {
 
     pub fn create_issue(
         conn: &mut PgConnection,
-        form: &IssueForm,
+        form: &CreateIssueForm,
         id_project: Uuid,
     ) -> QueryResult<Issue> {
         debug!("Create issue with data {:?}", form);
         let new_issue = NewIssue {
             name: form.name.clone(),
-            description: form.description.clone(),
-            mitigation: form.mitigation.clone(),
-            cvss: form.cvss.unwrap_or_else(|| 0.0),
+            description: None,
+            mitigation: None,
+            cvss: 0.0,
             project_id: id_project,
         };
         diesel::insert_into(issues::table)

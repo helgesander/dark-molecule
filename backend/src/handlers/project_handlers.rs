@@ -1,4 +1,4 @@
-use crate::dtos::handlers::{HostForm, IssueForm, ProjectForm, ProofOfConceptForm};
+use crate::dtos::handlers::{HostForm, IssueForm, ProjectForm, ProofOfConceptForm, CreateIssueForm};
 use crate::models::host::Host;
 use crate::models::issue::Issue;
 use crate::models::project::Project;
@@ -198,7 +198,7 @@ pub async fn update_issue_handler(
 pub async fn create_issue_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     path: web::Path<String>,
-    data: web::Json<IssueForm>,
+    data: web::Json<CreateIssueForm>,
 ) -> Result<HttpResponse, AppError> {
     let issue_data = data.into_inner();
     let project_id_str = path.into_inner();

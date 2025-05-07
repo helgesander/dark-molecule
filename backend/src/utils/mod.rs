@@ -6,6 +6,8 @@ use argon2::{
     Argon2,
 };
 use serde::{Deserialize, Serialize};
+use log::debug;
+use crate::utils::errors::AppError;
 
 #[derive(Deserialize)]
 pub struct FilterObjects {
@@ -29,10 +31,20 @@ pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Er
         .to_string())
 }
 
-// TODO: maybe change return type to Result<bool, argon2::Error>
-pub fn verify_password(hash: &str, password: &str) -> bool {
-    let parsed_hash = PasswordHash::new(hash).unwrap();
-    Argon2::default()
-        .verify_password(password.as_bytes(), &parsed_hash)
-        .is_ok()
+pub fn verify_password(hash: &str, password: &str) -> Result<bool, AppError> {
+    debug!("Verifying password: {}", hash);
+    let parsed_hash = PasswordHash::new(hash)
+        .map_err(|e| {
+            debug!("Error parsing password hash: {}", e);
+            AppError::InternalServerError
+        })?;
+
+    match Argon2::default().verify_password(password.as_bytes(), &parsed_hash) {
+        Ok(_) => Ok(true),
+        Err(argon2::password_hash::Error::Password) => Ok(false),
+        Err(e) => {
+            debug!("Error verifying password: {}", e);
+            Err(AppError::InternalServerError)
+        }
+    }
 }

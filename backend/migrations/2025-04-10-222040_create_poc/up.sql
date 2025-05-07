@@ -5,3 +5,4 @@ CREATE TABLE IF NOT EXISTS proof_of_concepts (
     data BYTEA NOT NULL,
     mime_type VARCHAR(50) NOT NULL
 );
+

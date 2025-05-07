@@ -9,6 +9,7 @@ use log::error;
 use serde::Deserialize;
 use validator::Validate;
 use uuid::Uuid;
+use crate::utils::verify_password;
 
 #[derive(Deserialize, Validate)]
 struct LoginForm {
@@ -48,39 +49,45 @@ pub async fn auth_handler(
     payload: web::Json<LoginForm>,
 ) -> Result<HttpResponse, AppError> {
     let form = payload.into_inner();
-    let possible_user = web::block(move || {
-        let mut conn = pool.get().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::InternalServerError
-        })?;
 
-        User::get_user_by_email(&mut conn, form.email).map_err(|e| {
+    // Получаем соединение
+    let mut conn = pool.get().map_err(|e| {
+        error!("Failed to get database connection: {}", e);
+        AppError::InternalServerError
+    })?;
+
+    // Ищем пользователя по email
+    let user = User::get_user_by_email(&mut conn, &form.email.clone())
+        .map_err(|e| {
             error!("Failed to get user: {}", e);
             AppError::DatabaseError
-        })
-    })
-    .await??;
+        })?
+        .ok_or(AppError::UnauthorizedError)?;
 
-    match possible_user {
-        Some(user) => {
-            session
-                .insert(
-                    "user_data",
-                    UserSession {
-                        user_id: user.id.clone(),
-                        role: Role::User,
-                    },
-                )
-                .map_err(|e| {
-                    error!("Troubles with session");
-                    AppError::DatabaseError
-                })?;
-            Ok(HttpResponse::Ok().json(LoginResponse {
-                user: UserData::from(&user),
-            }))
-        }
-        None => Ok(HttpResponse::Unauthorized().json("User not found")),
+    // Проверяем пароль
+    match verify_password(&user.password, &form.password) {
+        Ok(true) => (),
+        Ok(false) => return Err(AppError::UnauthorizedError),
+        Err(e) => return Err(e),
     }
+
+    // Кладём в сессию
+    session
+        .insert(
+            "user_data",
+            UserSession {
+                user_id: user.id.clone(),
+                role: Role::User,
+            },
+        )
+        .map_err(|e| {
+            error!("Troubles with session: {}", e);
+            AppError::DatabaseError
+        })?;
+
+    Ok(HttpResponse::Ok().json(LoginResponse {
+        user: UserData::from(&user),
+    }))
 }
 
 #[post("/logout")]

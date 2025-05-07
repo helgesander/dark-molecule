@@ -20,6 +20,11 @@ pub struct IssueForm {
     pub cvss: Option<f64>,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct CreateIssueForm {
+    pub name: String,
+}
+
 #[derive(Deserialize)]
 pub struct ProofOfConceptForm {
     pub description: String,

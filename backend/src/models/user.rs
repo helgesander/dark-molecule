@@ -49,7 +49,7 @@ impl User {
 
     pub fn get_user_by_email(
         conn: &mut PgConnection,
-        user_email: String,
+        user_email: &String,
     ) -> QueryResult<Option<User>> {
         // debug!("User with email {} try login", email);
         users
