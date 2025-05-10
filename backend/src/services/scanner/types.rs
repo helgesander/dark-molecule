@@ -17,6 +17,10 @@ pub enum Error {
     IoError(#[from] std::io::Error),
     #[error("Output parsing failed: {0}")]
     ParseError(String),
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
+    #[error("Database error: {0}")]
+    Database(String),
 }
 
 impl ScanStatus {

@@ -2,32 +2,33 @@ use crate::db::schema;
 use crate::dtos::handlers::ProofOfConceptForm;
 use crate::{db::schema::proof_of_concepts, models::project::Project};
 use diesel::prelude::*;
+use crate::models::issue::Issue;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone, Associations)]
 #[diesel(table_name = schema::proof_of_concepts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ProofOfConcept {
-    pub id: Uuid,
-    pub title: String,
+    pub id: i32,
     pub description: String,
-    pub code: String,
+    pub data: Vec<u8>,
     pub issue_id: Uuid,
-    pub created_at: chrono::NaiveDateTime,
-    pub updated_at: chrono::NaiveDateTime,
+    pub content_type: String,
+    pub host: String,
 }
 
 #[derive(Insertable, Deserialize, Debug)]
 #[diesel(table_name = schema::proof_of_concepts)]
 pub struct NewProofOfConcept {
-    pub title: String,
     pub description: String,
-    pub code: String,
+    pub data: Vec<u8>,
     pub issue_id: Uuid,
+    pub content_type: String,
+    pub host: String,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize)]
 pub struct PocMetadata {
     pub description: String,
     // TODO: add hosts maybe
@@ -44,6 +45,7 @@ impl ProofOfConcept {
         id_issue: Uuid,
     ) -> QueryResult<Vec<ProofOfConcept>> {
         use crate::db::schema::proof_of_concepts::dsl::*;
+        use crate::db::schema::issues::dsl::*;
         issues::table
             .find(id_issue)
             .select(Issue::as_select())
@@ -79,6 +81,7 @@ impl ProofOfConcept {
             data: form.data.clone(),
             issue_id: id_issue,
             content_type: form.content_type.clone(),
+            host: form.host.clone(),
         };
         diesel::insert_into(proof_of_concepts)
             .values(&new_poc)

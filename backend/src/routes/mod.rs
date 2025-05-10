@@ -5,6 +5,7 @@ use crate::handlers::{
 };
 use actix_web::web;
 use crate::middleware::auth::auth_middleware;
+use crate::handlers::scan_handlers;
 
 // TODO: add auth wrappers for all routes
 fn init_project_routes(cfg: &mut web::ServiceConfig) {
@@ -66,13 +67,14 @@ fn init_admin_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(web::scope("/admin").service(admin_handlers::get_admin_settings_handler));
 }
 
-// fn init_scan_routes(cfg: &mut web::ServiceConfig) {
-//     cfg.service(
-//         web::scope("/scan")
-//             .service(scan_handlers::get_scan_handler)
-//             .service(scan_handlers::create_scan_handler),
-//     );
-// }
+fn init_scan_routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::scope("/scan")
+            .service(scan_handlers::get_scan_result_handler)
+            .service(scan_handlers::start_scan_handler)
+            .service(scan_handlers::confirm_scan_handler),
+    );
+}
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -81,7 +83,7 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
             .configure(init_project_routes)
             .configure(init_auth_routes)
             .configure(init_admin_routes)
-            // .configure(init_scan_routes)
+            .configure(init_scan_routes)
             .configure(init_team_routes),
     );
 }

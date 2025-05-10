@@ -57,22 +57,32 @@ impl VulnerabilityScanner for NucleiService {
 
 
     async fn create_scan(&self, request: Self::ScanRequest) -> Result<String, Error> {
-        // TODO: read about it and change after maybe
-        info!("Started Nuclei scan ");
+        use std::sync::Arc;
+        use std::path::PathBuf;
+
         let task_id = Uuid::new_v4().to_string();
         let output_dir = self.scans_dir.join(&task_id);
         fs::create_dir_all(&output_dir).map_err(|e| Error::IoError(e))?;
-        // TODO: fix folder creation by date (if need)
         let scan_time = Utc::now().to_string().replace("-", "_");
         let output_file = output_dir.join(format!("result_{}.json", scan_time));
 
-        // Запускаем сканирование в фоне
-        tokio::task::spawn_blocking(move || Self::run_scan(self, request, &output_file))
-            .await
-            .map_err(|e| Error::ExecutionError(e.to_string()))??;
+        // Клонируем только нужные данные
+        let scans_dir = self.scans_dir.clone();
+        let request_clone = request.clone();
+        let output_file_clone = output_file.clone();
+        let task_id_clone = task_id.clone();
+
+        tokio::task::spawn_blocking(move || {
+            // Здесь нет self, только нужные данные
+            // Можно вынести run_scan в отдельную функцию, принимающую все нужные параметры
+            run_nuclei_scan(request_clone, &output_file_clone, &task_id_clone, &scans_dir)
+        })
+        .await
+        .map_err(|e| Error::ExecutionError(e.to_string()))??;
 
         Ok(task_id)
     }
+    
     async fn get_scan_result(&self, task_id: &str) -> Result<Self::ScanResult, Error> {
         let output_file = self.scans_dir.join(task_id).join("results.json");
 
@@ -90,7 +100,7 @@ impl VulnerabilityScanner for NucleiService {
         })
         // TODO: add issues creation with found results here maybe
     }
-    fn run_scan(&self, request: Self::ScanRequest, output_file: &Path) -> Result<(), Error> {
+    fn run_scan(&self, request: Self::ScanRequest, output_file: &Path, task_id: &str) -> Result<Self::ScanResult, Error> {
         let mut command = Command::new("nuclei");
 
         // Базовые параметры
@@ -129,7 +139,22 @@ impl VulnerabilityScanner for NucleiService {
             return Err(Error::ExecutionError(error));
         }
 
-        Ok(())
+        Ok(Self::ScanResult {
+            task_id: task_id.to_string(),
+            status: ScanStatus::Running,
+            findings: None,
+            error: None,
+        })
     }
+}
+
+// Вынесите run_scan в отдельную функцию:
+fn run_nuclei_scan(
+    request: NucleiScanRequest,
+    output_file: &Path,
+    task_id: &str,
+    scans_dir: &PathBuf,
+) -> Result<NucleiScanResult, Error> {
+    unimplemented()
 }
 

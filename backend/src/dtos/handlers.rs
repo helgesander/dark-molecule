@@ -29,7 +29,8 @@ pub struct CreateIssueForm {
 pub struct ProofOfConceptForm {
     pub description: String,
     pub data: Vec<u8>,
-    pub mime_type: String,
+    pub content_type: String,
+    pub host: String,
 }
 
 #[derive(Deserialize, Debug)]

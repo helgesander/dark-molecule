@@ -64,6 +64,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    scans (id) {
+        id -> Int4,
+        project_id -> Uuid,
+        #[max_length = 50]
+        scanner_type -> Varchar,
+        #[max_length = 20]
+        status -> Varchar,
+        started_at -> Nullable<Timestamptz>,
+        completed_at -> Nullable<Timestamptz>,
+        error_message -> Nullable<Text>,
+        scan_config -> Nullable<Jsonb>,
+        results_path -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
     teams (id) {
         id -> Uuid,
         #[max_length = 100]
@@ -112,6 +128,7 @@ diesel::joinable!(projects -> teams (team_id));
 diesel::joinable!(proof_of_concepts -> issues (issue_id));
 diesel::joinable!(report_templates -> teams (team_id));
 diesel::joinable!(report_templates -> users (user_id));
+diesel::joinable!(scans -> projects (project_id));
 diesel::joinable!(teams -> users (admin_id));
 diesel::joinable!(users_projects -> projects (project_id));
 diesel::joinable!(users_projects -> users (user_id));
@@ -124,6 +141,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     projects,
     proof_of_concepts,
     report_templates,
+    scans,
     teams,
     users,
     users_projects,

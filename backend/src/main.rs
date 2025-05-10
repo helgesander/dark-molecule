@@ -17,6 +17,7 @@ use env_logger::Env;
 use std::env;
 use std::time::Duration;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use crate::services::scanner::ScannerService;
 
 mod db;
 mod dtos;
@@ -24,7 +25,7 @@ mod handlers;
 mod middleware;
 mod models;
 mod routes;
-// mod services;
+mod services;
 mod utils;
 
 
@@ -48,8 +49,8 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(Env::default().default_filter_or(config.log_level.clone()));
 
     let pool = db::establish_connection();
+    let scanner_service = ScannerService::new(&config);
 
-    // let nuclei_service = NucleiService::new(config.scans_path.clone());
     HttpServer::new(move || {
         let cors = Cors::default()
             .allowed_origin("http://localhost:8080") // TODO: get from env
@@ -61,7 +62,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .app_data(Data::new(pool.clone()))
             .app_data(Data::new(config.clone()))
-            // .app_data(Data::new(nuclei_service.clone()))
+            .app_data(Data::new(scanner_service.clone()))
             .wrap(Logger::default())
             .wrap(
                 SessionMiddleware::builder(

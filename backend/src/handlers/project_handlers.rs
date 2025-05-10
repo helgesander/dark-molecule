@@ -4,7 +4,7 @@ use actix_multipart::form::text::Text;
 use crate::dtos::handlers::{HostForm, IssueForm, ProjectForm, ProofOfConceptForm, CreateIssueForm};
 use crate::models::host::Host;
 use crate::models::issue::Issue;
-use crate::models::project::{Project, ProjectResponse};
+use crate::models::project::Project;
 use crate::models::proof_of_concept::ProofOfConcept;
 use crate::utils::errors::{AppError, AppErrorJson};
 use actix_multipart::Multipart;
@@ -17,15 +17,7 @@ use uuid::Uuid;
 use crate::db::schema::teams::description;
 use std::io::Read;
 
-#[utoipa::path(
-    get,
-    path = "/api/project",
-    tag = "projects",
-    responses(
-        (status = 200, description = "List of projects", body = Vec<ProjectResponse>),
-        (status = 500, description = "Internal server error", body = AppErrorJson)
-    )
-)]
+
 #[get("/")]
 pub async fn get_projects_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -44,17 +36,7 @@ pub async fn get_projects_handler(
     Ok(HttpResponse::Ok().json(projects))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/project",
-    tag = "projects",
-    request_body = ProjectForm,
-    responses(
-        (status = 201, description = "Project created successfully", body = ProjectResponse),
-        (status = 400, description = "Invalid input data", body = AppErrorJson),
-        (status = 500, description = "Internal server error", body = AppErrorJson)
-    )
-)]
+
 #[post("/")]
 pub async fn create_project_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -76,19 +58,6 @@ pub async fn create_project_handler(
     Ok(HttpResponse::Created().json(project))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/project/{id}",
-    tag = "projects",
-    params(
-        ("id" = String, Path, description = "Project ID")
-    ),
-    responses(
-        (status = 200, description = "Project found", body = ProjectResponse),
-        (status = 404, description = "Project not found", body = AppErrorJson),
-        (status = 400, description = "Invalid project ID", body = AppErrorJson)
-    )
-)]
 #[get("/{id}")]
 pub async fn get_project_handler(
     path: web::Path<String>,
@@ -122,28 +91,6 @@ pub async fn get_project_handler(
     }
 }
 
-/// Handler to get minimized response for project (name and something else if need for frontend)
-#[get("/{id}/overview")]
-pub async fn get_project_overview_handler(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    path: web::Path<String>,
-) -> Result<HttpResponse, AppError> {
-    unimplemented!();
-}
-
-#[utoipa::path(
-    get,
-    path = "/api/project/{id}/issues",
-    tag = "projects",
-    params(
-        ("id" = String, Path, description = "Project ID")
-    ),
-    responses(
-        (status = 200, description = "List of issues", body = Vec<Issue>),
-        (status = 400, description = "Invalid project ID", body = AppErrorJson),
-        (status = 500, description = "Internal server error", body = AppErrorJson)
-    )
-)]
 #[get("/{id}/issues")] //TODO: мне название эндпоинта не нравится, но я пока оставлю так
 pub async fn get_issues_handler(
     id: web::Path<String>,
@@ -168,19 +115,7 @@ pub async fn get_issues_handler(
     Ok(HttpResponse::Ok().json(issues))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/project/{id}/hosts",
-    tag = "projects",
-    params(
-        ("id" = String, Path, description = "Project ID")
-    ),
-    responses(
-        (status = 200, description = "List of hosts", body = Vec<Host>),
-        (status = 400, description = "Invalid project ID", body = AppErrorJson),
-        (status = 500, description = "Internal server error", body = AppErrorJson)
-    )
-)]
+
 #[get("/{id}/hosts")]
 pub async fn get_hosts_handler(
     id: web::Path<String>,
@@ -205,20 +140,7 @@ pub async fn get_hosts_handler(
     Ok(HttpResponse::Ok().json(hosts))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/project/{project_id}/issue/{issue_id}",
-    tag = "projects",
-    params(
-        ("project_id" = String, Path, description = "Project ID"),
-        ("issue_id" = String, Path, description = "Issue ID")
-    ),
-    responses(
-        (status = 200, description = "Issue deleted successfully"),
-        (status = 404, description = "Issue not found", body = AppErrorJson),
-        (status = 400, description = "Invalid IDs", body = AppErrorJson)
-    )
-)]
+
 #[delete("/{project_id}/issue/{issue_id}")]
 pub async fn delete_issue_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -244,21 +166,7 @@ pub async fn delete_issue_handler(
     }
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/project/{project_id}/issue/{issue_id}",
-    tag = "projects",
-    params(
-        ("project_id" = String, Path, description = "Project ID"),
-        ("issue_id" = String, Path, description = "Issue ID")
-    ),
-    request_body = IssueForm,
-    responses(
-        (status = 200, description = "Issue updated successfully"),
-        (status = 404, description = "Issue not found", body = AppErrorJson),
-        (status = 400, description = "Invalid input data", body = AppErrorJson)
-    )
-)]
+
 #[put("/{project_id}/issue/{issue_id}")]
 pub async fn update_issue_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
