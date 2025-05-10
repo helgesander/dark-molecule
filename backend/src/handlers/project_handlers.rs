@@ -1,17 +1,31 @@
+use actix_multipart::form::MultipartForm;
+use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::text::Text;
 use crate::dtos::handlers::{HostForm, IssueForm, ProjectForm, ProofOfConceptForm, CreateIssueForm};
 use crate::models::host::Host;
 use crate::models::issue::Issue;
-use crate::models::project::Project;
+use crate::models::project::{Project, ProjectResponse};
 use crate::models::proof_of_concept::ProofOfConcept;
-use crate::utils::errors::AppError;
+use crate::utils::errors::{AppError, AppErrorJson};
 use actix_multipart::Multipart;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use log::error;
 use uuid::Uuid;
+use crate::db::schema::teams::description;
+use std::io::Read;
 
+#[utoipa::path(
+    get,
+    path = "/api/project",
+    tag = "projects",
+    responses(
+        (status = 200, description = "List of projects", body = Vec<ProjectResponse>),
+        (status = 500, description = "Internal server error", body = AppErrorJson)
+    )
+)]
 #[get("/")]
 pub async fn get_projects_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -30,6 +44,17 @@ pub async fn get_projects_handler(
     Ok(HttpResponse::Ok().json(projects))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/project",
+    tag = "projects",
+    request_body = ProjectForm,
+    responses(
+        (status = 201, description = "Project created successfully", body = ProjectResponse),
+        (status = 400, description = "Invalid input data", body = AppErrorJson),
+        (status = 500, description = "Internal server error", body = AppErrorJson)
+    )
+)]
 #[post("/")]
 pub async fn create_project_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -51,6 +76,19 @@ pub async fn create_project_handler(
     Ok(HttpResponse::Created().json(project))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/project/{id}",
+    tag = "projects",
+    params(
+        ("id" = String, Path, description = "Project ID")
+    ),
+    responses(
+        (status = 200, description = "Project found", body = ProjectResponse),
+        (status = 404, description = "Project not found", body = AppErrorJson),
+        (status = 400, description = "Invalid project ID", body = AppErrorJson)
+    )
+)]
 #[get("/{id}")]
 pub async fn get_project_handler(
     path: web::Path<String>,
@@ -93,6 +131,19 @@ pub async fn get_project_overview_handler(
     unimplemented!();
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/project/{id}/issues",
+    tag = "projects",
+    params(
+        ("id" = String, Path, description = "Project ID")
+    ),
+    responses(
+        (status = 200, description = "List of issues", body = Vec<Issue>),
+        (status = 400, description = "Invalid project ID", body = AppErrorJson),
+        (status = 500, description = "Internal server error", body = AppErrorJson)
+    )
+)]
 #[get("/{id}/issues")] //TODO: мне название эндпоинта не нравится, но я пока оставлю так
 pub async fn get_issues_handler(
     id: web::Path<String>,
@@ -117,6 +168,19 @@ pub async fn get_issues_handler(
     Ok(HttpResponse::Ok().json(issues))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/project/{id}/hosts",
+    tag = "projects",
+    params(
+        ("id" = String, Path, description = "Project ID")
+    ),
+    responses(
+        (status = 200, description = "List of hosts", body = Vec<Host>),
+        (status = 400, description = "Invalid project ID", body = AppErrorJson),
+        (status = 500, description = "Internal server error", body = AppErrorJson)
+    )
+)]
 #[get("/{id}/hosts")]
 pub async fn get_hosts_handler(
     id: web::Path<String>,
@@ -141,6 +205,20 @@ pub async fn get_hosts_handler(
     Ok(HttpResponse::Ok().json(hosts))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/project/{project_id}/issue/{issue_id}",
+    tag = "projects",
+    params(
+        ("project_id" = String, Path, description = "Project ID"),
+        ("issue_id" = String, Path, description = "Issue ID")
+    ),
+    responses(
+        (status = 200, description = "Issue deleted successfully"),
+        (status = 404, description = "Issue not found", body = AppErrorJson),
+        (status = 400, description = "Invalid IDs", body = AppErrorJson)
+    )
+)]
 #[delete("/{project_id}/issue/{issue_id}")]
 pub async fn delete_issue_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -166,6 +244,21 @@ pub async fn delete_issue_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/project/{project_id}/issue/{issue_id}",
+    tag = "projects",
+    params(
+        ("project_id" = String, Path, description = "Project ID"),
+        ("issue_id" = String, Path, description = "Issue ID")
+    ),
+    request_body = IssueForm,
+    responses(
+        (status = 200, description = "Issue updated successfully"),
+        (status = 404, description = "Issue not found", body = AppErrorJson),
+        (status = 400, description = "Invalid input data", body = AppErrorJson)
+    )
+)]
 #[put("/{project_id}/issue/{issue_id}")]
 pub async fn update_issue_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -312,63 +405,47 @@ pub async fn update_host_handler(
     }
 }
 
-// TODO: NEED TEST
+#[derive(Debug, MultipartForm)]
+struct UploadPocForm {
+    #[multipart(limit = "10MB")]
+    file: Option<TempFile>,
+    #[multipart(rename = "description")]
+    description: Text<String>,
+    #[multipart(rename = "host")]
+    host: Text<String>,
+}
+
 #[post("/{project_id}/issue/{issue_id}/poc")]
 pub async fn create_poc_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     path: web::Path<(String, String)>,
-    mut payload: Multipart,
+    MultipartForm(form): MultipartForm<UploadPocForm>,
 ) -> Result<HttpResponse, AppError> {
     let (_, issue_id_str) = path.into_inner();
     let issue_id = Uuid::parse_str(&issue_id_str).map_err(|_| AppError::BadRequest)?;
 
-    let mut description = String::new();
-    let mut data = Vec::new();
-    let mut mime_type = String::from("application/octet-stream");
-
-    // Обрабатываем multipart данные
-    while let Some(mut field) = payload.try_next().await? {
-        let field_name = field
-            .content_disposition()
-            .and_then(|cd| cd.get_name().map(|s| s.to_string()))
-            .unwrap_or_default();
-
-        match field_name.as_str() {
-            "description" => {
-                // Читаем текстовое поле description
-                while let Some(chunk) = field.try_next().await? {
-                    description =
-                        String::from_utf8(chunk.to_vec()).map_err(|_| AppError::BadRequest)?;
-                }
-            }
-            "file" => {
-                // Определяем MIME тип файла
-                if let Some(content_type) = field.content_type() {
-                    mime_type = content_type.to_string();
-                }
-
-                // Читаем бинарные данные файла
-                while let Some(chunk) = field.try_next().await? {
-                    data.extend_from_slice(&chunk);
-                }
-            }
-            _ => continue,
-        }
-    }
-
-    // Проверяем, что данные были получены
-    if description.is_empty() || data.is_empty() {
+    let (file_data, content_type) = if let Some(file) = form.file {
+        let mut data = Vec::new();
+        let content_type = file.content_type
+            .map(|mime| mime.to_string())
+            .unwrap_or_else(|| "application/octet-stream".to_string());
+        let mut file = file.file.as_file();
+        file.read_to_end(&mut data).map_err(|e| {
+            error!("Failed to read file: {}", e);
+            AppError::InternalServerError
+        })?;
+        (data, content_type)
+    } else {
         return Err(AppError::BadRequest);
-    }
-
-    // Создаем форму для передачи в БД
-    let poc_form = ProofOfConceptForm {
-        description,
-        data,
-        mime_type,
     };
 
-    // Сохраняем в БД
+    let poc_form = ProofOfConceptForm {
+        description: form.description.0,
+        data: file_data,
+        host: form.host.0,
+        content_type,
+    };
+
     let poc = web::block(move || {
         let mut conn = pool.get().map_err(|e| {
             error!("Failed to get database connection: {}", e);
@@ -384,8 +461,9 @@ pub async fn create_poc_handler(
     Ok(HttpResponse::Created().json(poc))
 }
 
+// TODO: maybe change later
 #[get("/{project_id}/issue/{issue_id}/poc/{poc_id}")]
-pub async fn get_poc_metadata_handler(
+pub async fn get_poc_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     path: web::Path<(String, String, i32)>,
 ) -> Result<HttpResponse, AppError> {
@@ -424,7 +502,7 @@ pub async fn get_poc_data_handler(
     Ok(HttpResponse::Ok()
         .content_type(
             poc_data
-                .mime_type
+                .content_type
                 .parse::<mime::Mime>()
                 .unwrap_or(mime::APPLICATION_OCTET_STREAM),
         )

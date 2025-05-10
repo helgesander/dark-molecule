@@ -15,7 +15,8 @@ pub struct ReportTemplate {
     pub team_id: Uuid,
     pub user_id: Uuid,
     pub name: String,
-    pub filename: String,
+    pub extension: String,
+    pub file_path: String,
 }
 
 impl ReportTemplate {

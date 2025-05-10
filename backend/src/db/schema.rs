@@ -43,7 +43,9 @@ diesel::table! {
         description -> Text,
         data -> Bytea,
         #[max_length = 50]
-        mime_type -> Varchar,
+        content_type -> Varchar,
+        #[max_length = 50]
+        host -> Varchar,
     }
 }
 
@@ -54,8 +56,10 @@ diesel::table! {
         user_id -> Uuid,
         #[max_length = 100]
         name -> Varchar,
+        #[max_length = 255]
+        file_path -> Varchar,
         #[max_length = 10]
-        filename -> Varchar,
+        extension -> Varchar,
     }
 }
 
