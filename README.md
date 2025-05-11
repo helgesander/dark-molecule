@@ -26,19 +26,19 @@ TEMPLATES_PATH: ./templates
 
 ## TODO
 - [ ] Modules with some usefull tools (wrote on lua)
-- [ ] Create users
-- [ ] Create projects
-- [ ] Frontend for all
-- [ ] Add authentication (JWT maybe...)
+- [x] Create users
+- [x] Create projects
+- [x] Frontend for all
+- [x] Add authentication (JWT maybe...)
 - [ ] Change synchronous postgres client to asynchronous
 - [ ] Fix https
 
 
 
-- [] Сделать валидацию введения данных пользователя
+- [x] Сделать валидацию введения данных пользователя
 - [] Сделать так, чтобы при возвращении Bad Request возвращалась причина
-- [] Добавить функцию валидации, что юзернейм, почта уникальны
-- [] Добавить инициализацию бд в код бекенда
+- [x] Добавить функцию валидации, что юзернейм, почта уникальны
+- [x] Добавить инициализацию бд в код бекенда
 - [] Модуль сканировать nmap для заполнения списка хостов (САМОЕ ГЛАВНОЕ)
 - [] Модуль сканирования nuclei, а также преобразования результатов в готовые issues (САМОЕ ГЛАВНОЕ)
 - [] Модуль сканирования gowitness, если нас интересует только веб

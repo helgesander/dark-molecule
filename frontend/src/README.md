@@ -2,16 +2,16 @@
 
 ## TODO
 
-- [ ] Add static files in spectial directory
+- [x] Add static files in spectial directory
 - [ ] Add change the theme of frontend (light and dark)
-- [ ] Fix fetch API data from backend
-- [ ] CENTER FUCKING LOGIN AND REGISTER FORMS
-- [ ] Fix broblems with scss file
-- [ ] Add icon of frontend
-- [ ] Fix project, projects, settings and profile pages
-- [ ] Fix changing of context (to admin panel) for users
+- [x] Fix fetch API data from backend
+- [x] CENTER FUCKING LOGIN AND REGISTER FORMS
+- [x] Fix broblems with scss file
+- [x] Add icon of frontend
+- [x] Fix project, projects, settings and profile pages
+- [x] Fix changing of context (to admin panel) for users
 - [ ] Fix dockerfile to build with cargo-chef (OPTIONALLY)
-- [ ] Fix navbar for project
-- [ ] Fix main navbar
-- [ ] Add icons for project navbar
-- [ ] Add hiding of description of project navbar elements (only icons will left)
+- [x] Fix navbar for project
+- [x] Fix main navbar
+- [x] Add icons for project navbar
+- [x] Add hiding of description of project navbar elements (only icons will left)
