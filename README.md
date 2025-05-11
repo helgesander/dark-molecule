@@ -1,14 +1,30 @@
 # Dark Molecule | Framework for Penetration Testers
 
-## Installation
+## Deploy
 
-via Docker: 
+### via Docker
 
 ```shell
 docker compose up --build
 ```
 
-## Configuration
+### without Docker (hard way)
+
+For backend:
+Install diesel and run this commands:
+
+```shell
+cd backend 
+diesel setup
+cargo run --release
+```
+
+At the first launch, an administrator account will be generated and displayed in the logs of backend.
+
+For frontend:
+TODO
+
+## Configuration (for Docker Deploy way)
 
 All settings presented in .env.example:
 
