@@ -2,18 +2,21 @@ use crate::db::schema;
 use crate::dtos::handlers::ProofOfConceptForm;
 use crate::{db::schema::proof_of_concepts, models::project::Project};
 use diesel::prelude::*;
+use diesel::associations::HasTable;
 use crate::models::issue::Issue;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone, Associations)]
 #[diesel(table_name = schema::proof_of_concepts)]
+#[diesel(belongs_to(Issue, foreign_key = issue_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ProofOfConcept {
     pub id: i32,
-    pub description: String,
-    pub data: Vec<u8>,
     pub issue_id: Uuid,
+    pub description: String,
+    #[diesel(sql_type = diesel::sql_types::Bytea)]
+    pub data: Vec<u8>,
     pub content_type: String,
     pub host: String,
 }
@@ -40,24 +43,22 @@ pub struct PocData {
 }
 
 impl ProofOfConcept {
-    pub fn get_pocs_by_issue_id(
-        conn: &mut PgConnection,
-        id_issue: Uuid,
-    ) -> QueryResult<Vec<ProofOfConcept>> {
-        use crate::db::schema::proof_of_concepts::dsl::*;
-        use crate::db::schema::issues::dsl::*;
-        issues::table
-            .find(id_issue)
-            .select(Issue::as_select())
-            .first(conn)
-            .optional()?
-            .map(|issue| {
-                ProofOfConcept::belonging_to(&issue)
-                    .select(ProofOfConcept::as_select())
-                    .load(conn)
-            })
-            .unwrap_or_else(|| Ok(Vec::new()))
-    }
+    // pub fn get_pocs_by_issue_id(
+    //     conn: &mut PgConnection,
+    //     id_issue: Uuid,
+    // ) -> QueryResult<Vec<ProofOfConcept>> {
+    //     issues::table
+    //         .find(id_issue)
+    //         .select(Issue::as_select())
+    //         .first(conn)
+    //         .optional()?
+    //         .map(|issue| {
+    //             ProofOfConcept::belonging_to(&issue)
+    //                 .select(())
+    //                 .load(conn)
+    //         })
+    //         .unwrap_or_else(|| Ok(Vec::new()))
+    // }
 
     pub fn get_poc(conn: &mut PgConnection, poc_id: i32) -> QueryResult<PocMetadata> {
         use crate::db::schema::proof_of_concepts::dsl::*;
@@ -85,7 +86,7 @@ impl ProofOfConcept {
         };
         diesel::insert_into(proof_of_concepts)
             .values(&new_poc)
-            .get_result::<ProofOfConcept>(conn)
+            .get_result(conn)
     }
 
     pub fn get_poc_data(conn: &mut PgConnection, poc_id: i32) -> QueryResult<PocData> {

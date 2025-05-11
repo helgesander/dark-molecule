@@ -41,7 +41,7 @@ pub struct IssueFullResponse {
     mitigation: Option<String>,
     cvss: f64,
     hosts: Vec<Host>,
-    pocs: Vec<ProofOfConcept>,
+    // pocs: Vec<ProofOfConcept>,
 }
 
 impl Issue {
@@ -129,7 +129,7 @@ impl Issue {
             mitigation: self.mitigation.clone(),
             cvss: self.cvss.clone(),
             hosts: Host::get_hosts_by_project_id(conn, self.project_id)?,
-            pocs: ProofOfConcept::get_pocs_by_issue_id(conn, self.id)?,
+            // pocs: ProofOfConcept::get_pocs_by_issue_id(conn, self.id)?,
         })
     }
 }

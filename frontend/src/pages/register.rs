@@ -76,6 +76,7 @@ pub fn register_page() -> Html {
                     password,
                     first_name: if first_name.is_empty() { None } else { Some(first_name) },
                     last_name: if last_name.is_empty() { None } else { Some(last_name) },
+                    is_admin: None,
                 }).await {
                     Ok(_) => {
                         navigator.push(&MainRoute::Login);

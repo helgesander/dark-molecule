@@ -19,9 +19,6 @@ pub fn project_sidebar(props: &ProjectSidebarProps) -> Html {
 
     html! {
         <aside class="sidebar">
-            // <div class="sidebar-header">
-            //     {props.project_name.clone()}
-            // </div>
             <nav class="sidebar-menu">
                 <ul>
                     {for tabs.iter().map(|(key, label, icon)| {

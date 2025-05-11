@@ -11,8 +11,9 @@ use crate::utils::errors::AppError;
 
 #[derive(Deserialize)]
 pub struct FilterObjects {
-    pub size: usize,
-    pub name: String,
+    pub size: Option<usize>,
+    pub page: Option<usize>,
+    pub name: Option<String>,
 }
 
 #[derive(Serialize)]

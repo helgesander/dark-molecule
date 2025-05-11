@@ -18,7 +18,14 @@ use std::env;
 use std::time::Duration;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use crate::services::scanner::ScannerService;
-
+use crate::models::user::User;
+use crate::dtos::db::UserForm;
+use crate::utils::errors::AppError;
+use log::info;
+use crate::db::schema::users::dsl::*;
+use rand::{thread_rng, Rng};
+use rand::distributions::Alphanumeric;
+use crate::utils::hash_password;
 mod db;
 mod dtos;
 mod handlers;
@@ -28,6 +35,30 @@ mod routes;
 mod services;
 mod utils;
 
+fn create_admin_user(conn: &mut PgConnection) -> Result<(), AppError> {
+    // Check if users table is empty
+    let user_count = users.count().get_result::<i64>(conn)?;
+    if user_count == 0 {
+        let new_password: String = thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(12)
+            .map(char::from)
+            .collect();
+
+        let admin_user = UserForm {
+            email: "admin@example.com".to_string(),
+            password: hash_password(&new_password)?,
+            is_admin: Some(true),
+            first_name: None,
+            last_name: None,
+            username: "admin".to_string(),
+        };
+        
+        User::create_user(conn, &admin_user)?;
+        info!("Admin user created: email: {} password: {}", admin_user.email, new_password);
+    }
+    Ok(())
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -50,6 +81,8 @@ async fn main() -> std::io::Result<()> {
 
     let pool = db::establish_connection();
     let scanner_service = ScannerService::new(&config);
+
+    create_admin_user(&mut pool.get().unwrap()).unwrap();
 
     HttpServer::new(move || {
         let cors = Cors::default()

@@ -9,6 +9,8 @@ use thiserror::Error;
 use uuid::Uuid;
 use crate::services::scanner::{ScanStatus, VulnerabilityScanner};
 use crate::services::scanner::types::Error;
+use async_trait::async_trait;
+use serde_json;
 
 #[derive(Clone)]
 pub struct NucleiService {
@@ -16,7 +18,7 @@ pub struct NucleiService {
     // nuclei_path: String
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NucleiScanRequest {
     pub target: String,
     pub templates: Option<Vec<String>>,
@@ -50,57 +52,52 @@ impl NucleiService {
     }
 }
 
+#[async_trait]
 impl VulnerabilityScanner for NucleiService {
     type ScanRequest = NucleiScanRequest;
-
     type ScanResult = NucleiScanResult;
 
-
     async fn create_scan(&self, request: Self::ScanRequest) -> Result<String, Error> {
-        use std::sync::Arc;
-        use std::path::PathBuf;
-
         let task_id = Uuid::new_v4().to_string();
         let output_dir = self.scans_dir.join(&task_id);
-        fs::create_dir_all(&output_dir).map_err(|e| Error::IoError(e))?;
-        let scan_time = Utc::now().to_string().replace("-", "_");
-        let output_file = output_dir.join(format!("result_{}.json", scan_time));
-
-        // Клонируем только нужные данные
-        let scans_dir = self.scans_dir.clone();
-        let request_clone = request.clone();
-        let output_file_clone = output_file.clone();
-        let task_id_clone = task_id.clone();
-
-        tokio::task::spawn_blocking(move || {
-            // Здесь нет self, только нужные данные
-            // Можно вынести run_scan в отдельную функцию, принимающую все нужные параметры
-            run_nuclei_scan(request_clone, &output_file_clone, &task_id_clone, &scans_dir)
-        })
-        .await
-        .map_err(|e| Error::ExecutionError(e.to_string()))??;
-
+        std::fs::create_dir_all(&output_dir).map_err(|e| Error::IoError(e))?;
+        
+        let output_file = output_dir.join("results.json");
+        self.run_scan(request, &output_file)?;
+        
         Ok(task_id)
     }
-    
+
     async fn get_scan_result(&self, task_id: &str) -> Result<Self::ScanResult, Error> {
         let output_file = self.scans_dir.join(task_id).join("results.json");
-
-        if output_file.exists() {
-            return Err(Error::ParseError(
-                "Output file doesn't exist".to_string(),
-            )); // TODO: change error for other error
+        if !output_file.exists() {
+            return Ok(NucleiScanResult {
+                task_id: task_id.to_string(),
+                status: ScanStatus::Running,
+                findings: None,
+                error: None,
+            });
         }
-        Ok(Self::ScanResult {
-            // TODO: fix adding scan output to struct
+        
+        let content = std::fs::read_to_string(&output_file)
+            .map_err(|e| Error::IoError(e))?;
+            
+        let findings: Vec<NucleiFinding> = serde_json::from_str(&content)
+            .map_err(|e| Error::ParseError(e.to_string()))?;
+            
+        Ok(NucleiScanResult {
             task_id: task_id.to_string(),
-            status: ScanStatus::Running,
-            findings: None,
+            status: ScanStatus::Completed,
+            findings: Some(findings),
             error: None,
         })
-        // TODO: add issues creation with found results here maybe
     }
-    fn run_scan(&self, request: Self::ScanRequest, output_file: &Path, task_id: &str) -> Result<Self::ScanResult, Error> {
+
+    fn run_scan(
+        &self,
+        request: Self::ScanRequest,
+        output_file: &Path,
+    ) -> Result<Self::ScanResult, Error> {
         let mut command = Command::new("nuclei");
 
         // Базовые параметры
@@ -117,11 +114,6 @@ impl VulnerabilityScanner for NucleiService {
                 command.arg(template);
             }
         }
-
-        // // Добавляем уровни серьезности
-        // if let Some(severities) = request.severity {
-        //     command.arg("-severity").arg(severities.join(",")); // TODO: maybe add later
-        // }
 
         // Добавляем формат вывода, если указан
         if let Some(format) = request.output_format {
@@ -140,7 +132,7 @@ impl VulnerabilityScanner for NucleiService {
         }
 
         Ok(Self::ScanResult {
-            task_id: task_id.to_string(),
+            task_id: Uuid::new_v4().to_string(),
             status: ScanStatus::Running,
             findings: None,
             error: None,
@@ -155,6 +147,6 @@ fn run_nuclei_scan(
     task_id: &str,
     scans_dir: &PathBuf,
 ) -> Result<NucleiScanResult, Error> {
-    unimplemented()
+    unimplemented!()
 }
 

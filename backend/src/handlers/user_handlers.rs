@@ -51,6 +51,7 @@ pub async fn create_user_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     data: web::Json<UserForm>,
 ) -> Result<HttpResponse, AppError> {
+    // TODO: ADD SECURITY CHECK FOR ADMIN (ONLY ADMIN CAN CREATE ADMNIN)
     let mut user_data = data.into_inner();
     match user_data.validate() {
         Ok(_) => (),

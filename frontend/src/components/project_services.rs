@@ -20,17 +20,18 @@ pub fn project_services(props: &ProjectServicesProps) -> Html {
     html! {
         <div>
             <h1>{"Services"}</h1>
-            <ul>
-                {for services.iter().map(|service| {
-                    let service_id = service.id;
-                    let on_click = on_service_click.clone();
-                    html! { 
-                        <li onclick={Callback::from(move |_: MouseEvent| on_click.emit(service_id))}>
-                            {&service.name}
-                        </li> 
-                    }
-                })}
-            </ul>
+            <h1 align="center">{"IN DEVELOPMENT"}</h1>
+            // <ul>
+            //     {for services.iter().map(|service| {
+            //         let service_id = service.id;
+            //         let on_click = on_service_click.clone();
+            //         html! { 
+            //             <li onclick={Callback::from(move |_: MouseEvent| on_click.emit(service_id))}>
+            //                 {&service.name}
+            //             </li> 
+            //         }
+            //     })}
+            // </ul>
         </div>
     }
 }

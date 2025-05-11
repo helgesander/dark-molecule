@@ -63,11 +63,21 @@ impl User {
         conn: &mut PgConnection,
         filter_data: &FilterObjects,
     ) -> QueryResult<Vec<UserResponse>> {
-        debug!("size = {}, name = {}", filter_data.size, filter_data.name);
-        let all_users = users
-            .select(User::as_select())
-            .filter(username.eq(filter_data.name.clone()))
-            .limit(filter_data.size as i64)
+        let mut query = users.into_boxed();
+
+        if let Some(page) = filter_data.page {
+            query = query.offset(page as i64 * filter_data.size.unwrap_or(10) as i64);
+        }
+        
+        if let Some(name_filter) = &filter_data.name {
+            query = query.filter(username.eq(name_filter));
+        }
+        
+        if let Some(size_limit) = filter_data.size {
+            query = query.limit(size_limit as i64);
+        }
+        
+        let all_users: Vec<User> = query
             .order(created_at.asc())
             .load(conn)?;
 

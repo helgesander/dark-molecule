@@ -15,4 +15,14 @@ uuid = { version = "1.4.1", features = ["serde", "v4", "js"] }
 log = "0.4.20"
 wasm-logger = "0.2.0"
 console_error_panic_hook = "0.1.7"
-web-sys = { version = "0.3.64", features = ["console"] }
+chrono = { version = "0.4", features = ["serde"] }
+web-sys = { version = "0.3.64", features = [
+    "console",
+    "HtmlSelectElement",
+    "HtmlElement",
+    "Event",
+    "EventTarget",
+    "InputEvent",
+    "HtmlInputElement",
+    "SubmitEvent"
+]}

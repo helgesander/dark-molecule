@@ -10,3 +10,8 @@ pub mod issues_list;
 pub mod project_services;
 pub mod project_settings;
 pub mod severity_icon;
+pub mod admin_sidebar;
+pub mod admin_users;
+pub mod admin_settings;
+pub mod create_team_modal;
+pub mod admin_teams;

@@ -5,6 +5,7 @@ use crate::context::user_context::UserContext;
 use crate::context::user_context::User;
 use crate::api::ApiClient;
 use gloo::console::log;
+use crate::routes::admin::AdminRoute;
 
 
 #[derive(Properties, PartialEq)]
@@ -62,20 +63,37 @@ pub fn navbar(props: &NavbarProps) -> Html {
                                 <span>{"Проекты"}</span>
                             </Link<MainRoute>>
                         </li>
+                        {if let Some(is_admin) = user.is_admin {
+                            if is_admin {
+                                html! {
+                                    <li>
+                                        <Link<MainRoute> to={MainRoute::AdminRoot} classes="nav-link">
+                                        <span>{"Администрирование"}</span>
+                                    </Link<MainRoute>>
+                                </li>
+                                }
+                            } else {
+                                html! {}
+                            }
+                        } else {
+                            html! {}
+                        }}
                     </ul>
                 </div>
             }
             <div class="navbar-right">
                 if !user.is_all_none() {
                     <div class="user-info">
-                        if let Some(avatar) = &user.avatar {
-                            <img src={avatar.clone()} class="avatar" alt="avatar" />
-                        } else {
-                            <div class="avatar-default">
-                                <img src="/static/icons/avatar.svg" class="icon" alt="avatar" />
-                            </div>
-                        }
-                        <span class="username">{user.username.clone()}</span>
+                        <Link<MainRoute> to={MainRoute::Profile} classes="profile-link">
+                            if let Some(avatar) = &user.avatar {
+                                <img src={avatar.clone()} class="avatar" alt="avatar" />
+                            } else {
+                                <div class="avatar-default">
+                                    <img src="/static/icons/avatar.svg" class="icon" alt="avatar" />
+                                </div>
+                            }
+                            <span class="username">{user.username.clone()}</span>
+                        </Link<MainRoute>>
                         <button class="logout-button" onclick={on_logout}>
                             <img src="/static/icons/logout.svg" class="icon" alt="Выйти" />
                             <span>{"Выйти"}</span>

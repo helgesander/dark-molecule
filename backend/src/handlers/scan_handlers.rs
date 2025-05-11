@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::utils::errors::AppError;
 use crate::services::scanner::nuclei::NucleiScanRequest;
 use crate::services::scanner::nmap::service::NmapScanRequest;
+use crate::services::scanner::gowitness::service::GowitnessScanRequest;
 
 #[derive(Debug, Deserialize)]
 pub struct ScanRequest {
@@ -39,28 +40,40 @@ pub async fn start_scan_handler(
                     task_id,
                     status: "queued".to_string(),
                 })),
-                Err(e) => Err(AppError::InternalServerError),            }
+                Err(e) => Err(AppError::InternalServerError),
+            }
         }
         "nmap" => {
             let nmap = scanner_service.get_nmap().await;
             let mut scanner = nmap.lock().await;
-            let req = NmapScanRequest { };
+            let req = NmapScanRequest {
+                target: request.data.clone(),
+                options: None,
+                os_detection: false,
+                ports: None,
+            };
             match scanner.create_scan(req).await {
                 Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
                     task_id,
                     status: "queued".to_string(),
                 })),
-                Err(e) => Err(AppError::InternalServerError),            }
+                Err(e) => Err(AppError::InternalServerError),
+            }
         }
         "gowitness" => {
             let gowitness = scanner_service.get_gowitness().await;
             let mut scanner = gowitness.lock().await;
-            match scanner.create_scan(request.into_inner()).await {
-                Ok(task_id) => HttpResponse::Ok().json(ScanResponse {
+            let req = GowitnessScanRequest {
+                target: request.data.clone(),
+                options: None,
+            };
+            match scanner.create_scan(req).await {
+                Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
                     task_id,
                     status: "queued".to_string(),
-                }),
-                Err(e) => Err(AppError::InternalServerError),            }
+                })),
+                Err(e) => Err(AppError::InternalServerError),
+            }
         }
         _ => Err(AppError::BadRequest),
     }
@@ -78,7 +91,8 @@ pub async fn get_scan_result_handler(
             let mut scanner = nuclei.lock().await;
             match scanner.get_scan_result(&task_id).await {
                 Ok(result) => Ok(HttpResponse::Ok().json(result)),
-                Err(e) => Err(AppError::InternalServerError),            }
+                Err(e) => Err(AppError::InternalServerError),
+            }
         }
         "nmap" => {
             let nmap = scanner_service.get_nmap().await;

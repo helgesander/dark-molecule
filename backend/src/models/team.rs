@@ -16,12 +16,21 @@ pub struct Team {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    admin_id: Uuid,
+    pub admin_id: Uuid,
 }
 
 impl Team {
     pub fn create_team(conn: &mut PgConnection, form: &TeamForm) -> QueryResult<Team> {
         debug!("Create team with data: {:?}", form);
+        
+        // Verify that the admin user exists
+        users
+            .filter(id.eq(form.admin_id))
+            .select(User::as_select())
+            .first::<User>(conn)
+            .optional()?
+            .ok_or_else(|| diesel::result::Error::NotFound)?;
+
         diesel::insert_into(teams::table)
             .values(form)
             .get_result::<Team>(conn)

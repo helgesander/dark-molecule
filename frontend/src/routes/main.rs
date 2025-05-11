@@ -5,7 +5,9 @@ use crate::pages::{
     login::LoginPage,
     not_found::NotFoundPage,
     register::RegisterPage,
-    projects::ProjectsPage
+    projects::ProjectsPage,
+    profile::ProfilePage,
+    admin::AdminPage
 };
 
 use crate::routes::{
@@ -38,15 +40,14 @@ pub enum MainRoute {
     NotFound
 }
 
-
 pub fn switch_main(route: MainRoute) -> Html {
     match route {
         MainRoute::Projects => html! {<ProjectsPage />},
         MainRoute::ProjectRoot | MainRoute::Project => html! { <Switch<ProjectRoute> render={ switch_project }/>},
         MainRoute::Login => html! {<LoginPage />},
         MainRoute::Register => html! {<RegisterPage />},
-        MainRoute::Admin | MainRoute::AdminRoot => html! { <Switch<AdminRoute> render={ switch_admin }/> },
-        MainRoute::Profile => html! {<h1>{"Profile Page"}</h1>},
+        MainRoute::Admin | MainRoute::AdminRoot => html! { <AdminPage /> },
+        MainRoute::Profile => html! {<ProfilePage />},
         MainRoute::MainPage => html! {<MainPage />},
         MainRoute::NotFound => html! {<NotFoundPage />}
     }

@@ -15,12 +15,13 @@ pub struct UserForm {
     pub email: String,
     #[validate(length(min = 8))]
     pub password: String,
+    pub is_admin: Option<bool>,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
 #[diesel(table_name = schema::teams)]
 pub struct TeamForm {
-    name: String,
-    description: Option<String>,
-    admin_id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub admin_id: Uuid,
 }

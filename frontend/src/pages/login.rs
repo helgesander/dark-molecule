@@ -56,8 +56,7 @@ pub fn login_page() -> Html {
                 match ApiClient::get().login(email, password).await {
                     Ok(user) => {
                         log!("LoginPage: login successful, user:", format!("{:?}", user));
-                        let user_id = user.id.to_string();
-                        match ApiClient::get().get_user(&user_id).await {
+                        match ApiClient::get().get_user(&user.id).await {
                             Ok(full_user) => {
                                 log!("LoginPage: got full user data:", format!("{:?}", full_user));
                                 user_context.dispatch(from_api_to_context(full_user));

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use web_sys::RequestCredentials;
 use std::sync::OnceLock;
+use chrono::NaiveDate;
 use log;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -37,11 +38,21 @@ pub struct ProjectOverview {
     pub scope: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct TeamForm {
+    pub name: String,
+    pub description: Option<String>,
+    pub admin_id: Uuid,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Team {
     pub id: Uuid,
     pub name: String,
+    pub description: Option<String>,
+    pub admin_id: Uuid,
 }
+
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Host {
@@ -85,15 +96,20 @@ pub struct CreateProjectRequest {
     pub name: String,
     pub scope: Option<String>,
     pub team_id: Uuid,
+    pub folder: String,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct User {
-    pub id: Uuid,
+    pub id: Option<Uuid>,
     pub username: String,
     pub email: String,
     pub is_admin: bool,
-    pub avatar: Option<String>
+    pub avatar: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -103,6 +119,7 @@ pub struct UserForm {
     pub username: String,
     pub email: String,
     pub password: String,
+    pub is_admin: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -201,27 +218,21 @@ impl ApiClient {
             return Err(format!("Ошибка сервера: {}", response.status()));
         }
 
-        response.json::<Vec<Team>>()
+        response.json::<Vec<Team>>() 
             .await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
 
     pub async fn create_project(
         &self,
-        name: String,
-        scope: Option<String>,
-        team_id: Uuid,
+        project: &CreateProjectRequest,
     ) -> Result<Project, String> {
-        let request = CreateProjectRequest {
-            name,
-            scope,
-            team_id,
-        };
+
 
         let response = Request::post(&format!("{}/project/", self.base_url))
             .header("Content-Type", "application/json")
             .credentials(RequestCredentials::Include)
-            .json(&request)
+            .json(&project)
             .unwrap()
             .send()
             .await
@@ -351,8 +362,45 @@ impl ApiClient {
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
 
-    pub async fn get_user(&self, id: &String) -> Result<User, String> {
-        let response = Request::get(&format!("{}/user/{}", self.base_url, id))
+    pub async fn get_user(&self, id: &Option<Uuid>) -> Result<User, String> {
+        let url = format!("{}/user/{}", self.base_url, id.as_ref().ok_or("No user ID provided")?);
+        let response = Request::get(&url)
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if response.status() == 200 {
+            let mut user = response.json::<User>()
+                .await
+                .map_err(|e| e.to_string())?;
+            // Ensure we preserve the ID from the request
+            user.id = *id;
+            Ok(user)
+        } else {
+            Err("Failed to get user".to_string())
+        }
+    }
+
+    pub async fn get_users(&self, size: Option<u32>, name: Option<String>) -> Result<Vec<User>, String> {
+        let mut query_params = Vec::new();
+        
+        if let Some(s) = size {
+            query_params.push(format!("size={}", s));
+        }
+        
+        if let Some(n) = name {
+            query_params.push(format!("name={}", n));
+        }
+        
+        let query_string = if query_params.is_empty() {
+            String::new()
+        } else {
+            format!("?{}", query_params.join("&"))
+        };
+
+        let response = Request::get(&format!("{}/user/{}", self.base_url, query_string))
             .header("Content-Type", "application/json")
             .credentials(RequestCredentials::Include)
             .send()
@@ -362,9 +410,30 @@ impl ApiClient {
         if response.status() == 401 {
             return Err("unauthorized".to_string());
         }
+
         if !response.ok() {
             return Err(format!("Ошибка сервера: {}", response.status()));
         }
+
+        response.json::<Vec<User>>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn create_user(&self, form: &UserForm) -> Result<User, String> {
+        let response = Request::post(&format!("{}/user/", self.base_url))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .json(form)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }   
+
         response.json::<User>()
             .await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
@@ -396,7 +465,7 @@ impl ApiClient {
             template: report_template,
         };
         
-        let response = Request::post(&format!("{}/project/{}/report/", self.base_url, project_id))
+        let response = Request::post(&format!("{}/project/{}/report", self.base_url, project_id))
             .header("Content-Type", "application/json")
             .credentials(RequestCredentials::Include)
             .send()
@@ -487,4 +556,29 @@ impl ApiClient {
             .await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
-}   
+
+    pub async fn create_team(&self, name: String, description: Option<String>, admin_id: Uuid) -> Result<Team, String> {
+        let form = TeamForm {
+            name,
+            description,
+            admin_id,
+        };
+
+        let response = Request::post(&format!("{}/team/", self.base_url))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .json(&form)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        response.json::<Team>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+}
