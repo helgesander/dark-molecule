@@ -8,6 +8,7 @@
     </div>
 
     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <p style="margin: 5px 0;"><strong style="color: #2c3e50;">ID проекта:</strong> {{project.id}}</p>
         <p style="margin: 5px 0;"><strong style="color: #2c3e50;">Дата начала:</strong> {{formatDate project.start_date}}</p>
         <p style="margin: 5px 0;"><strong style="color: #2c3e50;">Дата окончания:</strong> {{formatDate project.end_date}}</p>
         <p style="margin: 5px 0;"><strong style="color: #2c3e50;">Область исследования:</strong> {{project.scope}}</p>
@@ -26,19 +27,20 @@
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
             <h4 style="color: #2c3e50; margin-top: 0;">{{this.hostname}}</h4>
             <p style="margin: 5px 0;"><strong style="color: #3498db;">IP адрес:</strong> {{this.ip_address}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Статус:</strong> {{this.status}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Операционная система:</strong> {{this.os}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Открытые порты:</strong> {{this.open_ports}}</p>
         </div>
         {{/each}}
 
         <h3 style="color: #34495e;">Найденные уязвимости</h3>
         {{#each project.issues}}
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid {{#if (gte this.cvss 9.0)}}#e74c3c{{else if (gte this.cvss 7.0)}}#e67e22{{else if (gte this.cvss 4.0)}}#f1c40f{{else}}#2ecc71{{/if}};">
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid {{#if (eq this.severity "critical")}}#e74c3c{{else if (eq this.severity "high")}}#e67e22{{else if (eq this.severity "medium")}}#f1c40f{{else}}#2ecc71{{/if}};">
             <h4 style="color: #2c3e50; margin-top: 0;">{{this.title}}</h4>
-            <p style="margin: 5px 0;">
-                <strong style="color: #3498db;">Уровень риска:</strong> 
-                {{severityFromCvss this.cvss}} (CVSS: {{this.cvss}})
-            </p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Уровень риска:</strong> {{this.severity}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Статус:</strong> {{this.status}}</p>
             <p style="margin: 5px 0;"><strong style="color: #3498db;">Описание:</strong> {{this.description}}</p>
-            <p style="margin: 5px 0;"><strong style="color: #3498db;">Рекомендации по исправлению:</strong> {{this.mitigation}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Рекомендации по исправлению:</strong> {{this.recommendation}}</p>
         </div>
         {{/each}}
 
@@ -54,19 +56,19 @@
                     <p style="margin: 5px 0; color: #bdc3c7;">Всего уязвимостей</p>
                 </div>
                 <div style="text-align: center;">
-                    <p style="margin: 5px 0; font-size: 24px;">{{countBySeverity project.issues "critical"}}</p>
+                    <p style="margin: 5px 0; font-size: 24px;">{{countIssuesBySeverity project.issues "critical"}}</p>
                     <p style="margin: 5px 0; color: #bdc3c7;">Критических</p>
                 </div>
                 <div style="text-align: center;">
-                    <p style="margin: 5px 0; font-size: 24px;">{{countBySeverity project.issues "high"}}</p>
+                    <p style="margin: 5px 0; font-size: 24px;">{{countIssuesBySeverity project.issues "high"}}</p>
                     <p style="margin: 5px 0; color: #bdc3c7;">Высоких</p>
                 </div>
                 <div style="text-align: center;">
-                    <p style="margin: 5px 0; font-size: 24px;">{{countBySeverity project.issues "medium"}}</p>
+                    <p style="margin: 5px 0; font-size: 24px;">{{countIssuesBySeverity project.issues "medium"}}</p>
                     <p style="margin: 5px 0; color: #bdc3c7;">Средних</p>
                 </div>
                 <div style="text-align: center;">
-                    <p style="margin: 5px 0; font-size: 24px;">{{countBySeverity project.issues "low"}}</p>
+                    <p style="margin: 5px 0; font-size: 24px;">{{countIssuesBySeverity project.issues "low"}}</p>
                     <p style="margin: 5px 0; color: #bdc3c7;">Низких</p>
                 </div>
             </div>
@@ -78,7 +80,7 @@
         {{#each project.issues}}
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
             <h3 style="color: #2c3e50; margin-top: 0;">{{this.title}}</h3>
-            <p style="line-height: 1.6;">{{this.mitigation}}</p>
+            <p style="line-height: 1.6;">{{this.recommendation}}</p>
         </div>
         {{/each}}
     </div>
@@ -91,22 +93,20 @@
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
             <h4 style="color: #2c3e50; margin-top: 0;">{{this.hostname}}</h4>
             <p style="margin: 5px 0;"><strong style="color: #3498db;">IP:</strong> {{this.ip_address}}</p>
-            {{#if this.os}}<p style="margin: 5px 0;"><strong style="color: #3498db;">OS:</strong> {{this.os}}</p>{{/if}}
-            {{#if this.status}}<p style="margin: 5px 0;"><strong style="color: #3498db;">Статус:</strong> {{this.status}}</p>{{/if}}
-            {{#if this.open_ports}}<p style="margin: 5px 0;"><strong style="color: #3498db;">Порты:</strong> {{this.open_ports}}</p>{{/if}}
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">OS:</strong> {{this.os}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Статус:</strong> {{this.status}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Порты:</strong> {{this.open_ports}}</p>
         </div>
         {{/each}}
 
         <h3 style="color: #34495e;">B. Детали уязвимостей</h3>
         {{#each project.issues}}
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid {{#if (gte this.cvss 9.0)}}#e74c3c{{else if (gte this.cvss 7.0)}}#e67e22{{else if (gte this.cvss 4.0)}}#f1c40f{{else}}#2ecc71{{/if}};">
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid {{#if (eq this.severity "critical")}}#e74c3c{{else if (eq this.severity "high")}}#e67e22{{else if (eq this.severity "medium")}}#f1c40f{{else}}#2ecc71{{/if}};">
             <h4 style="color: #2c3e50; margin-top: 0;">{{this.title}}</h4>
-            <p style="margin: 5px 0;">
-                <strong style="color: #3498db;">Уровень риска:</strong> 
-                {{severityFromCvss this.cvss}} (CVSS: {{this.cvss}})
-            </p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Уровень риска:</strong> {{this.severity}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Статус:</strong> {{this.status}}</p>
             <p style="margin: 5px 0;"><strong style="color: #3498db;">Описание:</strong> {{this.description}}</p>
-            <p style="margin: 5px 0;"><strong style="color: #3498db;">Рекомендации:</strong> {{this.mitigation}}</p>
+            <p style="margin: 5px 0;"><strong style="color: #3498db;">Рекомендации:</strong> {{this.recommendation}}</p>
         </div>
         {{/each}}
     </div>
@@ -115,4 +115,4 @@
         <p style="margin: 5px 0;">Отчет сгенерирован автоматически системой Dark Molecule</p>
         <p style="margin: 5px 0;">Дата генерации: {{formatDate now}}</p>
     </div>
-</div>
+</div> 

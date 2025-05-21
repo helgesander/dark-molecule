@@ -28,16 +28,47 @@ impl MarkdownService {
             Ok(())
         }));
 
-        handlebars.register_helper("countIssuesBySeverity", Box::new(|h: &handlebars::Helper, _: &Handlebars, _: &handlebars::Context, _: &mut handlebars::RenderContext, out: &mut dyn handlebars::Output| {
-            let issues = h.param(0).ok_or_else(|| handlebars::RenderError::new("Param not found for helper 'countIssuesBySeverity'"))?;
-            let severity = h.param(1).ok_or_else(|| handlebars::RenderError::new("Param not found for helper 'countIssuesBySeverity'"))?;
-            
-            if let Some(issues_array) = issues.value().as_array() {
-                let count = issues_array.iter()
-                    .filter(|issue| issue.get("severity").and_then(|s| s.as_str()) == Some(severity.value().as_str().unwrap_or("")))
-                    .count();
-                out.write(&count.to_string())?;
-            }
+        handlebars.register_helper("severityFromCvss", Box::new(|h: &handlebars::Helper, _: &Handlebars, _: &handlebars::Context, _: &mut handlebars::RenderContext, out: &mut dyn handlebars::Output| {
+            // Получаем параметр CVSS score
+            let cvss_score = h.param(0)
+            .and_then(|v| v.value().as_f64())
+            .ok_or_else(|| handlebars::RenderError::new("CVSS score must be a number"))?;
+
+            // Определяем severity по стандартной классификации CVSS
+            let severity = if cvss_score >= 9.0 {
+                "Critical"
+            } else if cvss_score >= 7.0 {
+                "High"
+            } else if cvss_score >= 4.0 {
+                "Medium"
+            } else if cvss_score > 0.0 {
+                "Low"
+            } else {
+                "None"
+            };
+
+            out.write(severity)?;
+            Ok(())
+        }));
+
+        handlebars.register_helper("countBySeverity", Box::new(|h: &handlebars::Helper, _: &Handlebars, _: &handlebars::Context, _: &mut handlebars::RenderContext, out: &mut dyn handlebars::Output| {
+            let issues = h.param(0).and_then(|v| v.value().as_array()).ok_or(handlebars::RenderError::new("Param not found for helper 'countBySeverity'"))?;
+            let severity = h.param(1).and_then(|v| v.value().as_str()).ok_or(handlebars::RenderError::new("CVSS score must be a number"))?;
+
+            let count = issues.iter()
+                .filter(|issue| {
+                    let cvss = issue.get("cvss").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    match severity {
+                        "critical" => cvss >= 9.0,
+                        "high" => cvss >= 7.0,
+                        "medium" => cvss >= 4.0,
+                        "low" => cvss > 0.0,
+                        _ => false
+                    }
+                })
+                .count();
+
+            out.write(&count.to_string())?;
             Ok(())
         }));
 
