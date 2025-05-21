@@ -25,6 +25,8 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
             .service(project_handlers::create_issue_handler)
             .service(project_handlers::get_issue_handler)
             .service(project_handlers::create_report_handler)
+            .service(project_handlers::get_report_previews_for_project_handler)
+            .service(project_handlers::get_report_handler)
     );
 }
 

@@ -12,6 +12,7 @@ pub enum Error {
 }
 
 pub struct Report {
+    pub filename: String,
     pub content: Vec<u8>,
     pub format: String,
     pub generated_at: DateTime<Utc>,

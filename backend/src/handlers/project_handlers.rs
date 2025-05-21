@@ -20,6 +20,7 @@ use utoipa::openapi::security::Http;
 use crate::models::report::Report;
 use crate::models::report_template::ReportTemplate;
 use crate::services::report::{MarkdownService, ReportGenerator};
+use crate::services;
 
 #[get("/")]
 pub async fn get_projects_handler(
@@ -420,6 +421,28 @@ pub async fn get_poc_data_handler(
         .body(poc_data.data))
 }
 
+#[get("/{project_id}/report/all")]
+pub async fn get_report_previews_for_project_handler(
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    path: web::Path<String>
+) -> Result<HttpResponse, AppError> {
+    let _project_id = path.into_inner();
+    let project_id = Uuid::parse_str(&_project_id).map_err(|_| AppError::BadRequest)?;
+
+    let reports = web::block(move || {
+        let mut conn = pool.get().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::DatabaseError
+        })?;
+        Report::get_reports_preview_by_project_id(&mut conn, project_id).map_err(|e| {
+            error!("Failed to get report preview by project id: {}", e);
+            AppError::DatabaseError
+        })
+    })
+        .await??;
+    Ok(HttpResponse::Ok().json(reports))
+}
+
 #[post("/{project_id}/report")]
 pub async fn create_report_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -458,19 +481,27 @@ pub async fn create_report_handler(
                 AppError::NotFound
             })?;
 
-        let report = service.generate(&project_data, &template_data).map_err(|e| {
+        let mut report = service.generate(&project_data, &template_data).map_err(|e| {
             error!("Failed to generate report: {}", e);
             AppError::InternalServerError
-        });
+        })?;
 
-        report
+        service.save_report(&mut conn, project_id, report.filename.clone(), report.content.clone(), template_data.id)
+            .map_err(|e| {
+                error!("Failed to save report: {}", e);
+                AppError::DatabaseError
+            })?;
+        Ok::<services::report::types::Report, AppError>(report)
     })
     .await??;
 
-    Ok(HttpResponse::Created()
-        .content_type(mime::APPLICATION_OCTET_STREAM)
-        .body(report_data.content)
-    )
+    Ok(HttpResponse::Ok()
+        .content_type(mime_guess::from_path(&report_data.format).first_or_octet_stream())
+        .append_header((
+            "Content-Disposition",
+            format!("attachment; filename=\"{}\"", report_data.filename)
+        ))
+        .body(report_data.content))
 }
 
 #[get("/{project_id}/report/{report_id}")]

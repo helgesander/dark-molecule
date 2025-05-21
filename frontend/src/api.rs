@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use web_sys::RequestCredentials;
 use std::sync::OnceLock;
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
+use gloo::console::warn;
 use log;
+use crate::debug_log;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Project {
@@ -15,7 +17,7 @@ pub struct Project {
     pub team_id: Uuid,
     pub hosts: Vec<Host>,
     pub issues: Vec<Issue>,
-    pub reports: Option<Vec<Report>>,
+    pub reports: Option<Vec<ReportPreview>>,
     pub services: Option<Vec<Service>>,
 }
 
@@ -30,6 +32,12 @@ pub struct Service {
 pub struct Report {
     pub id: Uuid,
     pub name: String,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct ReportData {
+    pub filename: String,
+    pub data: Vec<u8>
 }
 
 #[derive(Deserialize)]
@@ -107,10 +115,14 @@ pub struct UpdateIssue {
     pub hosts: Vec<Host>
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+pub struct ReportPreview {
+    pub id: i32,
+    pub name: String,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CreateReportRequest {
-    pub name: String,
-    pub description: String,
     pub template_id: i32,
 }
 
@@ -487,16 +499,16 @@ impl ApiClient {
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
 
-    pub async fn create_report(&self, project_id: Uuid, report_name: String, report_description: String, report_template_id: i32) -> Result<Report, String> {
+    pub async fn create_report(&self, project_id: Uuid, report_template_id: i32) -> Result<ReportData, String> {
         let request = CreateReportRequest {
-            name: report_name,
-            description: report_description,
             template_id: report_template_id,
         };
         
         let response = Request::post(&format!("{}/project/{}/report", self.base_url, project_id))
             .header("Content-Type", "application/json")
             .credentials(RequestCredentials::Include)
+            .json(&request)
+            .unwrap()
             .send()
             .await
             .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
@@ -505,26 +517,43 @@ impl ApiClient {
             return Err("Ошибка при создании отчета".to_string());
         }
 
-        response.json::<Report>()
+        let content_disposition = response.headers()
+            .get("Content-Disposition")
+            .unwrap_or_default();
+
+        let filename = content_disposition
+            .split("filename=")
+            .nth(1)
+            .map(|s| s.trim_matches('"').to_string())
+            .unwrap_or_else(|| format!("report_{}.bin", project_id));
+
+        // Получаем бинарные данные
+        let data = response.binary()
             .await
-            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+            .map_err(|e| format!("Ошибка при чтении бинарных данных: {}", e))?;
+
+        Ok(ReportData {
+            filename,
+            data
+        })
     }
 
-    pub async fn get_report(&self, project_id: Uuid, report_id: Uuid) -> Result<Report, String> {
-        let response = Request::get(&format!("{}/project/{}/report/{}/", self.base_url, project_id, report_id)) // TODO: chande path to files
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
+
+    pub async fn get_reports_preview(&self, project_id: Uuid) -> Result<Vec<ReportPreview>, String> {
+        let response = Request::get(&format!("{}/project/{}/report/all", self.base_url, project_id))
+        .header("Content-Type", "application/json")
             .send()
             .await
             .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
 
         if !response.ok() {
             return Err(format!("Ошибка сервера: {}", response.status()));
-        }   
+        }
 
-        response.json::<Report>()
-            .await
+
+        response.json::<Vec<ReportPreview>>().await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+
     }
 
     pub async fn create_issue(&self, project_id: Uuid, name: String) -> Result<Issue, String> {
@@ -697,6 +726,44 @@ impl ApiClient {
         }
 
         Ok(())
+    }
+
+    pub async fn download_report(&self, project_id: Uuid, report_id: i32) -> Result<ReportData, String> {
+        let response = Request::get(&format!("{}/project/{}/report/{}", self.base_url, project_id, report_id))
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        let content_disposition = response.headers()
+            .get("content-disposition")
+            .unwrap_or_default(); // TODO: fix this later
+
+        let headers = response.headers().values(); // TODO: check all headers later
+
+        debug_log!("Content-Disposition: {}", content_disposition);
+
+        let filename =
+                content_disposition.split("filename=")
+                    .nth(1)
+                    .map(|s| s.trim_matches('"').to_string())
+            .unwrap_or_else(|| {
+                warn!("Content-Disposition header missing or malformed, using default filename");
+                format!("report_{}.md", Utc::now().format("%Y%m%d_%H%M%S"))
+            });
+
+        // Получаем бинарные данные
+        let data = response.binary()
+            .await
+            .map_err(|e| format!("Ошибка при чтении бинарных данных: {}", e))?;
+
+        Ok(ReportData {
+            filename,
+            data
+        })
     }
 }
 

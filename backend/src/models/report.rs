@@ -1,7 +1,7 @@
 use std::fs;
 use chrono::Utc;
 use diesel::prelude::*;
-use log::error;
+use log::{debug, error};
 use crate::models::report_template::ReportTemplate;
 use crate::db::schema;
 use uuid::Uuid;
@@ -99,6 +99,8 @@ impl Report {
             .filter(id.eq(report_id))
             .select((name, file_path))
             .first::<(String, String)>(conn)?;
+
+        debug!("Read file with name: {}", report_name.clone());
 
         let report_data = fs::read(&report_path).map_err(|e| {
             error!("Unable to read report file: {}", e);

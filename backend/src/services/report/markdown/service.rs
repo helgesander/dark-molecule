@@ -9,7 +9,7 @@ use crate::services::report::types::{Error, Report};
 use std::fs;
 use std::io::Write;
 use diesel::PgConnection;
-use log::error;
+use log::{debug, error};
 use crate::utils::config::CONFIG;
 use crate::models::report;
 
@@ -40,6 +40,21 @@ impl MarkdownService {
             }
             Ok(())
         }));
+
+        handlebars.register_helper("array_length", Box::new(
+            |h: &handlebars::Helper,
+             _: &Handlebars,
+             _: &handlebars::Context,
+             _: &mut handlebars::RenderContext,
+             out: &mut dyn handlebars::Output|
+                {
+                    let array = h.param(0)
+                        .and_then(|v| v.value().as_array())
+                        .ok_or_else(|| handlebars::RenderError::new("Expected an array"))?;
+                    out.write(&array.len().to_string())?;
+                    Ok(())
+                }
+        ));
     }
 }
 
@@ -59,11 +74,14 @@ impl ReportGenerator for MarkdownService {
             "now": Utc::now()
         });
 
+        let filename = format!("report_{}.md", Utc::now().format("%Y%m%d_%H%M%S"));
+
         // Рендерим отчет
         let rendered = handlebars.render("report", &data)
             .map_err(|e| Error::TemplateError(format!("Failed to render template: {}", e)))?;
 
         let report = Report {
+            filename,
             content: rendered.into_bytes(),
             format: "markdown".to_string(),
             generated_at: Utc::now(),
@@ -73,14 +91,14 @@ impl ReportGenerator for MarkdownService {
         Ok(report)
     }
 
-    fn save_report(&self, conn: &mut PgConnection, project_id: Uuid, data: Vec<u8>, template_id: i32) -> Result<(), Error> {
+    fn save_report(&self, conn: &mut PgConnection, project_id: Uuid, filename: String, data: Vec<u8>, template_id: i32) -> Result<(), Error> {
         let reports_dir = Path::new(&CONFIG.reports_path);
         if !reports_dir.exists() {
             fs::create_dir_all(reports_dir)
                 .map_err(|e| Error::FileError(format!("Failed to create reports directory: {}", e)))?;
         }
 
-        let filename = format!("report_{}_{}.md", project_id, Utc::now().format("%Y%m%d_%H%M%S"));
+        debug!("Save file with filename: {}", filename.clone());
         let file_path = reports_dir.join(filename.clone());
 
         let mut file = fs::File::create(file_path.clone())

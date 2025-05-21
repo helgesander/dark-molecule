@@ -62,7 +62,13 @@ fn create_admin_user(conn: &mut PgConnection) -> Result<(), AppError> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    env_logger::init_from_env(Env::default().default_filter_or(CONFIG.log_level.as_str()));
+    
+    // Настраиваем более подробное логирование
+    env_logger::Builder::from_env(Env::default().default_filter_or("debug"))
+        .format_timestamp_millis()
+        .format_module_path(false)
+        .format_target(false)
+        .init();
 
     let pool = db::establish_connection();
     let scanner_service = ScannerService::new(&CONFIG);
@@ -80,7 +86,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .app_data(Data::new(pool.clone()))
             .app_data(Data::new(scanner_service.clone()))
-            .wrap(Logger::default())
+            .wrap(Logger::new(
+                "%a %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %T"
+            ))
             .wrap(
                 SessionMiddleware::builder(
                     CookieSessionStore::default(),

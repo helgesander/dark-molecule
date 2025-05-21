@@ -67,13 +67,17 @@ pub fn report_form(props: &ReportFormProps) -> Html {
         Callback::from(move |e: Event| {
             let select = e.target_unchecked_into::<HtmlSelectElement>();
             let value = select.value();
-            selected_template.set(if value.is_empty() { None } else { Some(value.parse().unwrap()) }); // TODO: fix
+            if !value.is_empty() {
+                if let Ok(id) = value.parse::<i32>() {
+                    selected_template.set(Some(id));
+                }
+            } else {
+                selected_template.set(None);
+            }
         })
     };
 
     let on_submit = {
-        let name = name.clone();
-        let description = description.clone();
         let selected_template = selected_template.clone();
         let show_success = show_success.clone();
         let error_message = error_message.clone();
@@ -82,36 +86,30 @@ pub fn report_form(props: &ReportFormProps) -> Html {
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             
-            if let Some(template_id) = (*selected_template).clone() {
-                let request = CreateReportRequest {
-                    name: (*name).clone(),
-                    description: (*description).clone(),
-                    template_id,
-                };
-
+            if let Some(template_id) = *selected_template {
                 let show_success = show_success.clone();
                 let error_message = error_message.clone();
 
-                // wasm_bindgen_futures::spawn_local(async move {
-                //     match ApiClient::get()
-                //         .create_report(project_id, request)
-                //         .await
-                //     {
-                //         Ok(_) => {
-                //             show_success.set(true);
-                //             error_message.set(None);
-                //             // Сбросить форму через 3 секунды
-                //             let show_success = show_success.clone();
-                //             let timeout = gloo::timers::callback::Timeout::new(3_000, move || {
-                //                 show_success.set(false);
-                //             });
-                //             timeout.forget();
-                //         }
-                //         Err(e) => {
-                //             error_message.set(Some(format!("Ошибка при создании отчета: {}", e)));
-                //         }
-                //     }
-                // });
+                wasm_bindgen_futures::spawn_local(async move {
+                    match ApiClient::get()
+                        .create_report(project_id, template_id)
+                        .await
+                    {
+                        Ok(_) => {
+                            show_success.set(true);
+                            error_message.set(None);
+                            // Сбросить форму через 3 секунды
+                            let show_success = show_success.clone();
+                            let timeout = gloo::timers::callback::Timeout::new(3_000, move || {
+                                show_success.set(false);
+                            });
+                            timeout.forget();
+                        }
+                        Err(e) => {
+                            error_message.set(Some(format!("Ошибка при создании отчета: {}", e)));
+                        }
+                    }
+                });
             } else {
                 error_message.set(Some("Выберите шаблон отчета".to_string()));
             }
@@ -135,30 +133,30 @@ pub fn report_form(props: &ReportFormProps) -> Html {
             }
 
             <form onsubmit={on_submit}>
-                <div class="form-group">
-                    <label for="name">{"Название отчета"}</label>
-                    <input
-                        type="text"
-                        id="name"
-                        class="form-control"
-                        value={(*name).clone()}
-                        onchange={on_name_change}
-                        required=true
-                        placeholder="Введите название отчета"
-                    />
-                </div>
+            //     <div class="form-group">
+            //         <label for="name">{"Название отчета"}</label>
+            //         <input
+            //             type="text"
+            //             id="name"
+            //             class="form-control"
+            //             value={(*name).clone()}
+            //             onchange={on_name_change}
+            //             required=true
+            //             placeholder="Введите название отчета"
+            //         />
+            //     </div>
 
-                <div class="form-group">
-                    <label for="description">{"Описание"}</label>
-                    <textarea
-                        id="description"
-                        class="form-control"
-                        value={(*description).clone()}
-                        onchange={on_description_change}
-                        rows="3"
-                        placeholder="Добавьте описание отчета"
-                    />
-                </div>
+                // <div class="form-group">
+                //     <label for="description">{"Описание"}</label>
+                //     <textarea
+                //         id="description"
+                //         class="form-control"
+                //         value={(*description).clone()}
+                //         onchange={on_description_change}
+                //         rows="3"
+                //         placeholder="Добавьте описание отчета"
+                //     />
+                // </div>
 
                 <div class="form-group">
                     <label for="template">{"Шаблон отчета"}</label>
@@ -178,15 +176,11 @@ pub fn report_form(props: &ReportFormProps) -> Html {
                             }
                         })}
                     </select>
-                    // {if let Some(template) = templates.iter().find(|t| Some(&t.id) == (*selected_template).as_ref()) {
-                    //     if let Some(desc) = &template.description {
-                    //         html! {
-                    //             <div class="template-description">
-                    //                 {desc}
-                    //             </div>
-                    //         }
-                    //     } else {
-                    //         html! {}
+                    // {if let Some(template) = templates.iter().find(|t| Some(t.id.parse::<i32>().unwrap_or(0)) == *selected_template) {
+                    //     html! {
+                    //         <div class="template-description">
+                    //             {template.name.clone()}
+                    //         </div>
                     //     }
                     // } else {
                     //     html! {}
