@@ -64,8 +64,8 @@ pub fn project_page(props: &ProjectPageProps) -> Html {
                         t if t == "hosts" => html! { <ProjectHosts hosts={project.hosts.clone()} project_id={project.id}/> },
                         t if t == "issues" => html! { <ProjectIssues issues={project.issues.clone()} project_id={project.id} /> },
                         t if t == "reports" => html! { <ProjectReports reports={project.reports.clone().unwrap_or_default()} project_id={project.id} /> },
-                        t if t == "services" => html! { <ProjectServices services={project.services.clone().unwrap_or_default()} /> },
-                        t if t == "settings" => html! { <ProjectSettings project_id={project.id} /> },
+                        // t if t == "services" => html! { <ProjectServices services={project.services.clone().unwrap_or_default()} /> },
+                        // t if t == "settings" => html! { <ProjectSettings project_id={project.id} /> },
                         _ => html! { <div>{"Настройки проекта"}</div> },
                     }}
                 </main>

@@ -17,8 +17,8 @@ $hover-color: #f3f4f6;      // Цвет при наведении
     --text-color: #333333;
     --border-color: #dddddd;
     --input-background: #f5f5f5;
-    --primary-color: #007bff;
-    --primary-color-dark: #0056b3;
+    --primary-color: #9F37F6;
+    --primary-color-dark: #9F37F6;
     --error-color: #dc3545;
 }
 
@@ -317,21 +317,8 @@ body {
     }
 
     .login-button {
+        @extend .button;
         width: 100%;
-        padding: 14px;
-        background: $primary-color;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        font-size: 1.1rem;
-        font-family: 'Fira Mono', monospace;
-        font-weight: 600;
-        cursor: pointer;
-        margin-top: 8px;
-        transition: background 0.2s;
-        &:hover {
-            background: darken($primary-color, 10%);
-        }
     }
 
     .login-link {
@@ -505,9 +492,9 @@ footer {
 .project-card {
     width: 100%;
     box-sizing: border-box;
-    background-color: #f3f4f6;
+    background-color: #fff;
     border-radius: 0.75rem;
-    padding: 1.5rem 2rem;
+    padding: 2rem 2rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
@@ -1413,6 +1400,11 @@ footer {
     }
 }
 
+.create-issue-button {
+    @extend .button;
+    margin: 1em;
+}
+
 .create-user-page {
     max-width: 600px;
     margin: 0 auto;
@@ -2003,5 +1995,73 @@ footer {
     .reports-left,
     .reports-right {
         width: 100%;
+    }
+}
+
+// Common button styles
+.button, 
+.btn-primary,
+.btn-secondary, 
+button[type="submit"],
+input[type="submit"] {
+    background-color: $primary-color !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    &:hover {
+        background-color: darken($primary-color, 10%) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(159, 55, 246, 0.2);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    &.secondary {
+        background-color: transparent !important;
+        border: 1px solid $primary-color !important;
+        color: $primary-color !important;
+
+        &:hover {
+            background-color: $primary-color !important;
+            color: #fff !important;
+        }
+    }
+}
+
+// Update login button
+.login-button {
+    @extend .button;
+    width: 100%;
+}
+
+// Update create project button
+.create-project-button {
+    @extend .button;
+    margin-bottom: 1em;
+}
+
+// Update logout button
+.logout-button {
+    @extend .button;
+    background-color: transparent !important;
+    border: 1px solid $primary-color !important;
+    color: $primary-color !important;
+
+    &:hover {
+        background-color: $primary-color !important;
+        color: #fff !important;
     }
 }
