@@ -1,3 +1,4 @@
+use std::fmt::format;
 use gloo::net::http::Request;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -31,6 +32,13 @@ pub struct Report {
     pub name: String,
 }
 
+#[derive(Deserialize)]
+pub struct ReportTemplatePreview {
+    pub id: i32,
+    pub name: String,
+    pub extension: String
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct ProjectOverview {
     pub id: Uuid,
@@ -54,12 +62,16 @@ pub struct Team {
 }
 
 
-#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Host {
-    pub id: Uuid,
-    pub name: String,
-    pub ip: String,
-    pub os: Option<String>,
+    pub hostname: Option<String>,
+    pub ip_address: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct CreateHostRequest {
+    pub hostname: Option<String>,
+    pub ip_address: String,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -69,6 +81,16 @@ pub struct Issue {
     pub description: Option<String>,
     pub mitigation: Option<String>,
     pub cvss: f64,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct IssueFullResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub mitigation: Option<String>,
+    pub cvss: f64,
+    pub hosts: Vec<Host>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -81,14 +103,21 @@ pub struct UpdateIssue {
     pub name: String,
     pub description: Option<String>,
     pub mitigation: Option<String>,
-    pub cvss: f64
+    pub cvss: f64,
+    pub hosts: Vec<Host>
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CreateReportRequest {
     pub name: String,
     pub description: String,
-    pub template: String,
+    pub template_id: i32,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct CreateTemplateRequest {
+    pub name: String,
+    pub file: Vec<u8>
 }
 
 #[derive(Serialize)]
@@ -458,11 +487,11 @@ impl ApiClient {
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
 
-    pub async fn create_report(&self, project_id: Uuid, report_name: String, report_description: String, report_template: String) -> Result<Report, String> {
+    pub async fn create_report(&self, project_id: Uuid, report_name: String, report_description: String, report_template_id: i32) -> Result<Report, String> {
         let request = CreateReportRequest {
             name: report_name,
             description: report_description,
-            template: report_template,
+            template_id: report_template_id,
         };
         
         let response = Request::post(&format!("{}/project/{}/report", self.base_url, project_id))
@@ -520,7 +549,7 @@ impl ApiClient {
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))    
     }
 
-    pub async fn get_issue(&self, project_id: Uuid, issue_id: Uuid) -> Result<Issue, String> {
+    pub async fn get_issue(&self, project_id: Uuid, issue_id: Uuid) -> Result<IssueFullResponse, String> {
         let response = Request::get(&format!("{}/project/{}/issue/{}", self.base_url, project_id, issue_id))
             .header("Content-Type", "application/json")
             .credentials(RequestCredentials::Include)
@@ -532,7 +561,7 @@ impl ApiClient {
             return Err(format!("Ошибка сервера: {}", response.status()));
         }   
 
-        response.json::<Issue>()
+        response.json::<IssueFullResponse>()
             .await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
@@ -581,4 +610,93 @@ impl ApiClient {
             .await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
+
+    pub async fn get_hosts(&self, project_id: Uuid) -> Result<Vec<Host>, String> {
+        let response = Request::get(&format!("{}/project/{}/hosts", self.base_url, project_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        response.json::<Vec<Host>>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+    
+
+    pub async fn create_host(&self, project_id: Uuid, host: CreateHostRequest) -> Result<Host, String> {
+        let response = Request::post(&format!("{}/project/{}/host", self.base_url, project_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .json(&host)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+    
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+    
+        response.json::<Host>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn update_host(&self, project_id: Uuid, host: CreateHostRequest) -> Result<Host, String> {
+        let response = Request::put(&format!("{}/project/{}/host", self.base_url, project_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .json(&host)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+    
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+    
+        response.json::<Host>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn get_report_templates(&self) -> Result<Vec<ReportTemplatePreview>, String> {
+        let response = Request::get(&format!("{}/templates/all", self.base_url))
+            .header("Content-Type", "application/json")
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        };
+
+        response.json::<Vec<ReportTemplatePreview>>()
+        .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn create_report_template(&self, form: web_sys::FormData) -> Result<(), String> {
+        let response = Request::post(&format!("{}/template/", self.base_url))
+            // .header("Content-Type", "multipart/form-data")
+            .body(&form)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        Ok(())
+    }
 }
+

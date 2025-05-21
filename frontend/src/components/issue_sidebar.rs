@@ -1,26 +1,23 @@
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
-pub struct AdminSidebarProps {
+pub struct IssueSidebarProps {
     pub active_tab: String,
     pub on_tab_select: Callback<String>,
 }
 
-#[function_component(AdminSidebar)]
-pub fn admin_sidebar(props: &AdminSidebarProps) -> Html {
+#[function_component(IssueSidebar)]
+pub fn issue_sidebar(props: &IssueSidebarProps) -> Html {
     let tabs = vec![
-        ("users", "Users", "/static/icons/users.svg"),
-        ("settings", "Settings", "/static/icons/settings.svg"),
-        ("teams", "Teams", "/static/icons/team.svg"),
-        ("reports_templates", "Reports Templates", "/static/icons/reports.svg"),
-    ];  
-    
+        ("back", "Назад", "/static/icons/back.svg"),
+        ("edit", "Редактирование", "/static/icons/edit.svg"),
+        ("poc", "PoC", "/static/icons/poc.svg"),
+    ];
 
     html! {
-        <aside class="sidebar">   
+        <aside class="sidebar">
             <div class="sidebar-menu">
                 <ul>
-
                     {for tabs.iter().map(|(key, label, icon)| {
                         let is_active = props.active_tab == *key;
                         let on_tab_select = props.on_tab_select.clone();
@@ -35,4 +32,4 @@ pub fn admin_sidebar(props: &AdminSidebarProps) -> Html {
             </div>
         </aside>
     }
-}
+} 

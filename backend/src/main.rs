@@ -1,31 +1,20 @@
 extern crate diesel;
 
-use crate::routes::init_routes;
-use crate::utils::config::AppConfig;
-use crate::utils::errors::AppErrorJson;
 use actix_cors::Cors;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
-use actix_web::cookie::{Key, SameSite};
+use actix_web::cookie::Key;
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpResponse, HttpServer};
 use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, Pool};
 use dotenv::dotenv;
 use env_logger::Env;
-use std::env;
-use std::time::Duration;
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use crate::services::scanner::ScannerService;
-use crate::models::user::User;
-use crate::dtos::db::UserForm;
-use crate::utils::errors::AppError;
 use log::info;
-use crate::db::schema::users::dsl::*;
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
-use crate::utils::hash_password;
+use std::env;
+
 mod db;
 mod dtos;
 mod handlers;
@@ -34,6 +23,16 @@ mod models;
 mod routes;
 mod services;
 mod utils;
+
+use crate::routes::init_routes;
+use crate::utils::errors::AppErrorJson;
+use crate::services::scanner::ScannerService;
+use crate::models::user::User;
+use crate::dtos::db::UserForm;
+use crate::utils::errors::AppError;
+use crate::db::schema::users::dsl::*;
+use crate::utils::hash_password;
+use crate::utils::config::CONFIG;
 
 fn create_admin_user(conn: &mut PgConnection) -> Result<(), AppError> {
     // Check if users table is empty
@@ -62,31 +61,17 @@ fn create_admin_user(conn: &mut PgConnection) -> Result<(), AppError> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // use self::db::schema::users::dsl::*;
-    #[cfg(debug_assertions)]
-    {
-        dotenv().ok();
-        let config = AppConfig {
-            database_url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
-            port: 8000,
-            log_level: "debug".to_string(),
-            secret_key: Key::from("428742874djkjkdfsdhfhhkjdchsjkdhfkjshdfjkshdjfhsdjfh2873894728934728dajkshdkjahdkjahdjkahdjkahsjkdhajsdhajkhsdjakhsd27349287842742874387ajsdhkajshdjahdjkahdjkahsdjhajsdh23728734928734".as_bytes()),
-            templates_path: "./templates".to_string(),
-            scans_path: "./scans".to_string()
-        };
-    }
-
-    let config = AppConfig::new().expect("Can't load config");
-    env_logger::init_from_env(Env::default().default_filter_or(config.log_level.clone()));
+    dotenv().ok();
+    env_logger::init_from_env(Env::default().default_filter_or(CONFIG.log_level.as_str()));
 
     let pool = db::establish_connection();
-    let scanner_service = ScannerService::new(&config);
+    let scanner_service = ScannerService::new(&CONFIG);
 
     create_admin_user(&mut pool.get().unwrap()).unwrap();
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:8080") // TODO: get from env
+            .allowed_origin("http://localhost:8080")
             .allow_any_method()
             .allow_any_header()
             .supports_credentials();
@@ -94,17 +79,15 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .app_data(Data::new(pool.clone()))
-            .app_data(Data::new(config.clone()))
             .app_data(Data::new(scanner_service.clone()))
             .wrap(Logger::default())
             .wrap(
                 SessionMiddleware::builder(
                     CookieSessionStore::default(),
-                    config.secret_key.clone(),
+                    CONFIG.secret_key.clone()
                 )
                 .cookie_name("session".parse().unwrap())
-                .cookie_secure(false) // В development можно false, в production должно быть true
-                // .cookie_http_only(true)
+                .cookie_secure(false)
                 .build(),
             )
             .configure(init_routes)
@@ -115,7 +98,7 @@ async fn main() -> std::io::Result<()> {
                 })
             }))
     })
-    .bind(("0.0.0.0", 8000))?
+    .bind((CONFIG.server.host.as_str(), CONFIG.server.port))?
     .run()
     .await
 }

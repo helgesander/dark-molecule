@@ -1,6 +1,7 @@
 use yew::prelude::*;
 use crate::api::{Report, ApiClient};
 use uuid::Uuid;
+use crate::components::report_form::ReportForm;
 
 #[derive(Properties, PartialEq)]
 pub struct ProjectReportsProps {
@@ -13,25 +14,24 @@ pub fn project_reports(props: &ProjectReportsProps) -> Html {
     let reports = use_state(|| props.reports.clone());
 
     html! {
-        <div class="reports-section">
-            <h2>{"Отчеты"}</h2>
-            <div class="reports-grid">
-                {
-                    if reports.is_empty() {
-                        html! { <div class="no-reports">{"Отчетов нет"}</div> }
-                    } else {
-                        html! {
-                            <>
-                                {for reports.iter().map(|report| {
-                                    html! {
-                                        <div class="report-card">
-                                            <h3>{&report.name}</h3>
-                                        </div>
-                                    }
-                                })}
-                            </>
-                        }
-                    }
+        <div class="reports-container">
+            <div class="reports-left">
+                <ReportForm project_id={props.project_id}/>
+            </div>
+            <div class="reports-right">
+                <h3>{"Существующие отчеты"}</h3>
+                if reports.is_empty() {
+                    <p>{"Нет доступных отчетов"}</p>
+                } else {
+                    <ul class="reports-list">
+                        {reports.iter().map(|report| {
+                            html! {
+                                <li class="report-item">
+                                    <span class="report-name">{&report.name}</span>
+                                </li>
+                            }
+                        }).collect::<Html>()}
+                    </ul>
                 }
             </div>
         </div>

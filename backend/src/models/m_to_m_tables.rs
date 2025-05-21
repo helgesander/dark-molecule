@@ -1,4 +1,4 @@
-use crate::db::schema::{users_projects, users_teams};
+use crate::db::schema::{users_projects, users_teams, issue_hosts};
 use diesel::prelude::*;
 use uuid::Uuid;
 
@@ -22,4 +22,16 @@ pub struct UserProject {
 pub struct UserTeam {
     pub user_id: Uuid,
     pub team_id: Uuid,
+}
+
+
+#[derive(Debug, Queryable, Identifiable, Selectable)]
+#[diesel(table_name = issue_hosts)]
+#[diesel(belongs_to(Issue))]
+#[diesel(belongs_to(Host))]
+#[diesel(primary_key(issue_id, host_id))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct IssueHost {
+    pub issue_id: Uuid,
+    pub host_id: i32,
 }

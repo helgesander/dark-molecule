@@ -1,6 +1,9 @@
 use crate::models::user::User;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use actix_multipart::form::text::Text;
+use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::MultipartForm;
 use uuid::Uuid;
 
 #[derive(Serialize)]
@@ -12,15 +15,16 @@ pub struct UserData {
     pub is_admin: bool,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 pub struct IssueForm {
     pub name: String,
     pub description: Option<String>,
     pub mitigation: Option<String>,
     pub cvss: Option<f64>,
+    pub hosts: Vec<HostForm>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 pub struct CreateIssueForm {
     pub name: String,
 }
@@ -44,10 +48,29 @@ pub struct ProjectForm {
     pub team_id: Uuid,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct HostForm {
     pub hostname: Option<String>,
     pub ip_address: String,
+}
+
+#[derive(Debug, MultipartForm)]
+pub struct UploadReportTemplateForm {
+    #[multipart(limit = "10MB")]
+    pub file: Option<TempFile>,
+    pub name: Text<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReportTemplateForm {
+    pub file: Vec<u8>,
+    pub filename: String,
+    pub name: String
+}
+
+#[derive(Deserialize)]
+pub struct ReportForm {
+    pub template_id: i32,
 }
 
 impl UserData {

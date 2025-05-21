@@ -26,3 +26,5 @@ web-sys = { version = "0.3.64", features = [
     "HtmlInputElement",
     "SubmitEvent"
 ]}
+gloo-timers = "0.3.0"
+gloo-file = "0.3.0"

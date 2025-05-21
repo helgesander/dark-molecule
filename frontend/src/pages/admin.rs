@@ -3,7 +3,8 @@ use crate::components::{
     admin_sidebar::AdminSidebar,
     admin_users::AdminUsers,
     admin_settings::AdminSettings,
-    admin_teams::AdminTeams
+    admin_teams::AdminTeams,
+    admin_report_templates::AdminReportTemplates,
 };
 
 #[function_component(AdminPage)]
@@ -28,6 +29,7 @@ pub fn admin_page() -> Html {
                     "users" => html! { <AdminUsers /> },
                     "settings" => html! { <AdminSettings /> },
                     "teams" => html! { <AdminTeams /> },
+                    "reports_templates" => html! { <AdminReportTemplates /> },
                     _ => html! { <AdminUsers /> },
                 }}
             </div>

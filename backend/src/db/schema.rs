@@ -11,6 +11,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    issue_hosts (issue_id, host_id) {
+        issue_id -> Uuid,
+        host_id -> Int4,
+    }
+}
+
+diesel::table! {
     issues (id) {
         id -> Uuid,
         #[max_length = 100]
@@ -51,15 +58,25 @@ diesel::table! {
 
 diesel::table! {
     report_templates (id) {
-        id -> Uuid,
-        team_id -> Uuid,
-        user_id -> Uuid,
+        id -> Int4,
         #[max_length = 100]
         name -> Varchar,
         #[max_length = 255]
         file_path -> Varchar,
         #[max_length = 10]
         extension -> Varchar,
+    }
+}
+
+diesel::table! {
+    reports (id) {
+        id -> Int4,
+        #[max_length = 100]
+        name -> Varchar,
+        #[max_length = 255]
+        file_path -> Varchar,
+        template_id -> Int4,
+        project_id -> Uuid,
     }
 }
 
@@ -123,11 +140,13 @@ diesel::table! {
 }
 
 diesel::joinable!(hosts -> projects (project_id));
+diesel::joinable!(issue_hosts -> hosts (host_id));
+diesel::joinable!(issue_hosts -> issues (issue_id));
 diesel::joinable!(issues -> projects (project_id));
 diesel::joinable!(projects -> teams (team_id));
 diesel::joinable!(proof_of_concepts -> issues (issue_id));
-diesel::joinable!(report_templates -> teams (team_id));
-diesel::joinable!(report_templates -> users (user_id));
+diesel::joinable!(reports -> projects (project_id));
+diesel::joinable!(reports -> report_templates (template_id));
 diesel::joinable!(scans -> projects (project_id));
 diesel::joinable!(teams -> users (admin_id));
 diesel::joinable!(users_projects -> projects (project_id));
@@ -137,10 +156,12 @@ diesel::joinable!(users_teams -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     hosts,
+    issue_hosts,
     issues,
     projects,
     proof_of_concepts,
     report_templates,
+    reports,
     scans,
     teams,
     users,

@@ -17,7 +17,6 @@ pub struct ProjectPageProps {
 
 #[function_component(ProjectPage)]
 pub fn project_page(props: &ProjectPageProps) -> Html {
-    let force_update = use_force_update();
     let project = use_state(|| None::<Project>);
     let error = use_state(|| String::new());
     let active_tab = use_state(|| props.active_tab.clone().unwrap_or("hosts".to_string()));
@@ -30,9 +29,8 @@ pub fn project_page(props: &ProjectPageProps) -> Html {
         let project = project.clone();
         let error = error.clone();
         let project_id = props.project_id;
-        let force_update = force_update.clone();
         use_effect_with_deps(move |_| {
-            let project: UseStateHandle<Option<Project>> = project.clone();
+            let project = project.clone();
             let error = error.clone();
 
             wasm_bindgen_futures::spawn_local(async move {
@@ -41,7 +39,6 @@ pub fn project_page(props: &ProjectPageProps) -> Html {
                     Ok(data) => {
                         debug_log!("Project data received: {}", &data.name);
                         project.set(Some(data));
-                        force_update.force_update(); // TODO: remove this
                     }
                     Err(e) => {
                         debug_log!("Error loading project: {}", &e);
@@ -62,10 +59,9 @@ pub fn project_page(props: &ProjectPageProps) -> Html {
                     if !error.is_empty() {
                         <div class="error-message">{error.to_string()}</div>
                     }
-                    // <button onclick={Callback::from(move |_| {force_update.force_update();})}>{"Обновить"}</button>
                     
                     {match &*active_tab {
-                        t if t == "hosts" => html! { <ProjectHosts hosts={project.hosts.clone()} /> },
+                        t if t == "hosts" => html! { <ProjectHosts hosts={project.hosts.clone()} project_id={project.id}/> },
                         t if t == "issues" => html! { <ProjectIssues issues={project.issues.clone()} project_id={project.id} /> },
                         t if t == "reports" => html! { <ProjectReports reports={project.reports.clone().unwrap_or_default()} project_id={project.id} /> },
                         t if t == "services" => html! { <ProjectServices services={project.services.clone().unwrap_or_default()} /> },
@@ -73,6 +69,8 @@ pub fn project_page(props: &ProjectPageProps) -> Html {
                         _ => html! { <div>{"Настройки проекта"}</div> },
                     }}
                 </main>
+            } else if !error.is_empty() {
+                <div class="error-message">{error.to_string()}</div>
             } else {
                 <div class="loading">{"Загрузка проекта..."}</div>
             }

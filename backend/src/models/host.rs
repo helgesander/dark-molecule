@@ -25,22 +25,44 @@ pub struct NewHost {
     project_id: Uuid,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct HostResponse {
+    pub hostname: Option<String>,
+    pub ip_address: String,
+}
+
 impl Host {
     pub fn get_hosts_by_project_id(
         conn: &mut PgConnection,
         id_project: Uuid,
-    ) -> QueryResult<Vec<Host>> {
-        projects::table
+    ) -> QueryResult<Vec<HostResponse>> {
+        use crate::db::schema::hosts::dsl::*;
+        
+        // Находим проект
+        let project = match projects::table
             .find(id_project)
             .select(Project::as_select())
             .first(conn)
-            .optional()?
-            .map(|project| {
-                Host::belonging_to(&project)
-                    .select(Host::as_select())
-                    .load(conn)
-            })
-            .unwrap_or_else(|| Ok(Vec::new()))
+            .optional()? {
+                Some(p) => p,
+                None => return Ok(Vec::new()),
+            };
+
+        // Получаем хосты для проекта
+        let selected_hosts = Host::belonging_to(&project)
+            .select((hostname, ip_address))
+            .load::<(Option<String>, String)>(conn)?;
+
+        // Преобразуем результаты в HostResponse
+        let mut result = Vec::with_capacity(selected_hosts.len());
+        for (host, ip) in selected_hosts {
+            result.push(HostResponse {
+                hostname: host,
+                ip_address: ip,
+            });
+        }
+
+        Ok(result)
     }
 
     pub fn create_host(

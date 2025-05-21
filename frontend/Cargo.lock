@@ -145,6 +145,8 @@ dependencies = [
  "chrono",
  "console_error_panic_hook",
  "gloo 0.9.0",
+ "gloo-file 0.3.0",
+ "gloo-timers 0.3.0",
  "log",
  "serde",
  "serde_json",
@@ -281,13 +283,13 @@ checksum = "28999cda5ef6916ffd33fb4a7b87e1de633c47c0dc6d97905fee1cdaa142b94d"
 dependencies = [
  "gloo-console",
  "gloo-dialogs",
- "gloo-events",
- "gloo-file",
+ "gloo-events 0.1.2",
+ "gloo-file 0.2.3",
  "gloo-history",
  "gloo-net",
  "gloo-render",
  "gloo-storage",
- "gloo-timers",
+ "gloo-timers 0.2.6",
  "gloo-utils",
  "gloo-worker 0.2.1",
 ]
@@ -300,13 +302,13 @@ checksum = "bfcc48ab4c2db58b3e9d6c9af9eef336c2318dfdf7f75b710c46b2a1855d1a1e"
 dependencies = [
  "gloo-console",
  "gloo-dialogs",
- "gloo-events",
- "gloo-file",
+ "gloo-events 0.1.2",
+ "gloo-file 0.2.3",
  "gloo-history",
  "gloo-net",
  "gloo-render",
  "gloo-storage",
- "gloo-timers",
+ "gloo-timers 0.2.6",
  "gloo-utils",
  "gloo-worker 0.3.0",
 ]
@@ -345,13 +347,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "gloo-events"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27c26fb45f7c385ba980f5fa87ac677e363949e065a083722697ef1b2cc91e41"
+dependencies = [
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "gloo-file"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8d5564e570a38b43d78bdc063374a0c3098c4f0d64005b12f9bbe87e869b6d7"
 dependencies = [
  "futures-channel",
- "gloo-events",
+ "gloo-events 0.1.2",
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "gloo-file"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97563d71863fb2824b2e974e754a81d19c4a7ec47b09ced8a0e6656b6d54bd1f"
+dependencies = [
+ "gloo-events 0.2.0",
  "js-sys",
  "wasm-bindgen",
  "web-sys",
@@ -363,7 +387,7 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85725d90bf0ed47063b3930ef28e863658a7905989e9929a8708aab74a1d5e7f"
 dependencies = [
- "gloo-events",
+ "gloo-events 0.1.2",
  "gloo-utils",
  "serde",
  "serde-wasm-bindgen",
@@ -427,6 +451,16 @@ checksum = "9b995a66bb87bebce9a0f4a95aed01daca4872c050bfcb21653361c03bc35e5c"
 dependencies = [
  "futures-channel",
  "futures-core",
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "gloo-timers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
+dependencies = [
  "js-sys",
  "wasm-bindgen",
 ]

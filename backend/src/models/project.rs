@@ -7,6 +7,7 @@ use diesel::prelude::*;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::models::host::HostResponse;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Deserialize, Debug)]
 #[diesel(table_name = crate::db::schema::projects)]
@@ -47,7 +48,7 @@ pub struct ProjectFullResponse {
     folder: String,
     team_id: Uuid,
     issues: Vec<Issue>,
-    hosts: Vec<Host>,
+    hosts: Vec<HostResponse>,
 }
 
 #[derive(Serialize)]

@@ -1,1 +1,0 @@
-DROP TABLE proof_of_concepts;

@@ -1,17 +1,17 @@
 use actix_web::middleware::from_fn;
 use crate::handlers::{
-    admin_handlers, auth_handlers, project_handlers, report_handlers, team_handlers,
-    user_handlers,
+    admin_handlers, auth_handlers, project_handlers,
+    team_handlers, scan_handlers, user_handlers, template_handlers
 };
 use actix_web::web;
+use actix_web::web::service;
 use crate::middleware::auth::auth_middleware;
-use crate::handlers::scan_handlers;
 
 // TODO: add auth wrappers for all routes
 fn init_project_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/project")
-            .wrap(from_fn(auth_middleware))
+            // .wrap(from_fn(auth_middleware))
             .service(project_handlers::get_projects_handler)
             .service(project_handlers::get_project_handler)
             .service(project_handlers::create_project_handler)
@@ -23,16 +23,23 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
             .service(project_handlers::create_host_handler)
             .service(project_handlers::update_host_handler)
             .service(project_handlers::create_issue_handler)
-            .service(project_handlers::get_issue_handler),
+            .service(project_handlers::get_issue_handler)
+            .service(project_handlers::create_report_handler)
     );
 }
 
-fn init_report_routes(cfg: &mut web::ServiceConfig) {
+fn init_template_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope("/report")
-            .service(report_handlers::create_report_handler)
-            .service(report_handlers::get_report_handler),
-    );
+        web::scope("/template")
+            // .wrap(from_fn(auth_middleware)) // TODO: uncomment after tests
+            .service(template_handlers::get_template_handler)
+            .service(template_handlers::create_template_handler)
+            // .service(template_handlers::get_templates_preview_handler)
+    )
+        .service(
+            web::scope("/templates")
+                .service(template_handlers::get_templates_preview_handler)
+        );
 }
 
 fn init_auth_routes(cfg: &mut web::ServiceConfig) {
@@ -46,7 +53,7 @@ fn init_auth_routes(cfg: &mut web::ServiceConfig) {
 fn init_user_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/user")
-            // .wrap(from_fn(auth_middleware))
+            // .wrap(from_fn(auth_middleware)) // TODO: uncomment after tests
             .service(user_handlers::create_user_handler)
             .service(user_handlers::get_users_handler)
             .service(user_handlers::delete_user_handler)
@@ -84,6 +91,7 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
             .configure(init_auth_routes)
             .configure(init_admin_routes)
             .configure(init_scan_routes)
-            .configure(init_team_routes),
+            .configure(init_team_routes)
+            .configure(init_template_routes),
     );
 }

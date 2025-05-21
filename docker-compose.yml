@@ -7,10 +7,12 @@ services:
       - "${BACKEND_PORT}:8080"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      PORT: ${BACKEND_PORT}
+      SERVER_PORT: ${BACKEND_PORT}
     depends_on:
       - db
       - frontend
+    volumes:
+      - ./templates:/app/templates
       # TODO: mount template folder 
   frontend:
     build:
