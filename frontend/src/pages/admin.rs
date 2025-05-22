@@ -27,7 +27,7 @@ pub fn admin_page() -> Html {
             <div class="project-main">
                 {match active_tab.as_str() {
                     "users" => html! { <AdminUsers /> },
-                    "settings" => html! { <AdminSettings /> },
+                    // "settings" => html! { <AdminSettings /> },
                     "teams" => html! { <AdminTeams /> },
                     "reports_templates" => html! { <AdminReportTemplates /> },
                     _ => html! { <AdminUsers /> },
