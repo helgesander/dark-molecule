@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --critical: #e74c3c;
+            --high: #e67e22;
+            --medium: #f1c40f;
+            --low: #2ecc71;
+            --background: #f8f9fa;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #fff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+        }
+
+        .project-info {
+            background: var(--background);
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            color: var(--primary);
+            border-bottom: 3px solid var(--secondary);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .card.critical { border-left-color: var(--critical); }
+        .card.high { border-left-color: var(--high); }
+        .card.medium { border-left-color: var(--medium); }
+        .card.low { border-left-color: var(--low); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+            color: var(--text-light);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .tag.critical { background: var(--critical); color: white; }
+        .tag.high { background: var(--high); color: white; }
+        .tag.medium { background: var(--medium); color: var(--text); }
+        .tag.low { background: var(--low); color: white; }
+
+        .cvss-score {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <svg class="logo" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="white"/>
+            <path d="M30 50 L45 65 L70 35" stroke="var(--primary)" stroke-width="5" fill="none"/>
+        </svg>
+        <h1>Отчет по проекту: {{project.name}}</h1>
+    </div>
+
+    <div class="project-info">
+        <p><strong>Дата начала:</strong> {{formatDate project.start_date}}</p>
+        <p><strong>Дата окончания:</strong> {{formatDate project.end_date}}</p>
+        <p><strong>Область исследования:</strong> {{project.scope}}</p>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Описание проекта</h2>
+        <div class="card">
+            <p>{{project.description}}</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Результаты исследования</h2>
+
+        <h3>Обнаруженные хосты</h3>
+        {{#each project.hosts}}
+        <div class="card">
+            <h4>{{this.hostname}}</h4>
+            <p><strong>IP адрес:</strong> {{this.ip_address}}</p>
+            {{#if this.os}}<p><strong>OS:</strong> {{this.os}}</p>{{/if}}
+            {{#if this.status}}<p><strong>Статус:</strong> {{this.status}}</p>{{/if}}
+            {{#if this.open_ports}}<p><strong>Порты:</strong> {{this.open_ports}}</p>{{/if}}
+        </div>
+        {{/each}}
+
+        <h3>Найденные уязвимости</h3>
+        {{#each project.issues}}
+        <div class="card {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
+            <h4>{{this.title}}</h4>
+            <p>
+                <strong>Уровень риска:</strong>
+                <span class="tag {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
+                    {{severityFromCvss this.cvss}}
+                </span>
+                <span class="cvss-score">CVSS: {{this.cvss}}</span>
+            </p>
+            <p><strong>Описание:</strong> {{this.description}}</p>
+            <p><strong>Рекомендации по исправлению:</strong> {{this.mitigation}}</p>
+        </div>
+        {{/each}}
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{array_length project.hosts}}</div>
+                <div class="stat-label">Всего хостов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{array_length project.issues}}</div>
+                <div class="stat-label">Всего уязвимостей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{countBySeverity project.issues "critical"}}</div>
+                <div class="stat-label">Критических</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{countBySeverity project.issues "high"}}</div>
+                <div class="stat-label">Высоких</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{countBySeverity project.issues "medium"}}</div>
+                <div class="stat-label">Средних</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{countBySeverity project.issues "low"}}</div>
+                <div class="stat-label">Низких</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Рекомендации по безопасности</h2>
+        {{#each project.issues}}
+        <div class="card">
+            <h3>{{this.title}}</h3>
+            <p>{{this.mitigation}}</p>
+        </div>
+        {{/each}}
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Приложения</h2>
+
+        <h3>A. Детали хостов</h3>
+        {{#each project.hosts}}
+        <div class="card">
+            <h4>{{this.hostname}}</h4>
+            <p><strong>IP:</strong> {{this.ip_address}}</p>
+            {{#if this.os}}<p><strong>OS:</strong> {{this.os}}</p>{{/if}}
+            {{#if this.status}}<p><strong>Статус:</strong> {{this.status}}</p>{{/if}}
+            {{#if this.open_ports}}<p><strong>Порты:</strong> {{this.open_ports}}</p>{{/if}}
+        </div>
+        {{/each}}
+
+        <h3>B. Детали уязвимостей</h3>
+        {{#each project.issues}}
+        <div class="card {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
+            <h4>{{this.title}}</h4>
+            <p>
+                <strong>Уровень риска:</strong>
+                <span class="tag {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
+                    {{severityFromCvss this.cvss}}
+                </span>
+                <span class="cvss-score">CVSS: {{this.cvss}}</span>
+            </p>
+            <p><strong>Описание:</strong> {{this.description}}</p>
+            <p><strong>Рекомендации:</strong> {{this.mitigation}}</p>
+        </div>
+        {{/each}}
+    </div>
+
+    <div class="footer">
+        <p>Отчет сгенерирован автоматически системой Dark Molecule</p>
+        <p>Дата генерации: {{formatDate now}}</p>
+    </div>
+</body>
+</html>

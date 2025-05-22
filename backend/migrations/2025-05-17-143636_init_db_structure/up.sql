@@ -72,18 +72,6 @@ CREATE TABLE report_templates (
     extension VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE scans (
-    id SERIAL PRIMARY KEY,
-    project_id UUID NOT NULL REFERENCES projects(id),
-    scanner_type VARCHAR(50) NOT NULL,
-    status VARCHAR(20) NOT NULL,
-    started_at TIMESTAMP WITH TIME ZONE,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    error_message TEXT,
-    scan_config JSONB,
-    results_path TEXT
-);
-
 CREATE TABLE users_teams (
     user_id UUID NOT NULL REFERENCES users(id),
     team_id UUID NOT NULL REFERENCES teams(id),
