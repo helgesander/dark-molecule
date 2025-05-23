@@ -1,11 +1,12 @@
-use crate::dtos::db::TeamForm;
-use crate::models::team::Team;
-use crate::utils::errors::AppError;
 use actix_web::{get, post, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use log::error;
 use uuid::Uuid;
+
+use crate::dtos::db::TeamForm;
+use crate::models::team::Team;
+use crate::utils::errors::AppError;
 
 #[post("/")]
 pub async fn create_team_handler(

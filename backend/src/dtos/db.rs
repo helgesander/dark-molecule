@@ -1,8 +1,9 @@
-use crate::db::schema;
 use diesel::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
 use validator::Validate;
+
+use crate::db::schema;
 
 #[derive(Insertable, Deserialize, Validate, AsChangeset, Debug)]
 #[diesel(table_name = schema::users)]

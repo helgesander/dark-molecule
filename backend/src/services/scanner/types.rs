@@ -1,3 +1,4 @@
+use quick_xml::events::attributes::AttrError;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -13,14 +14,28 @@ pub enum ScanStatus {
 pub enum Error {
     #[error("Scanner execution failed: {0}")]
     ExecutionError(String),
-    #[error("IO error: {0}")]
-    IoError(#[from] std::io::Error),
+    #[error("I/O Error: {0}")]
+    IoError(String),
     #[error("Output parsing failed: {0}")]
     ParseError(String),
     #[error("Invalid request: {0}")]
     InvalidRequest(String),
     #[error("Database error: {0}")]
     Database(String),
+    #[error("Scan not found: {0}")]
+    NotFound(String),
+}
+
+impl From<quick_xml::Error> for Error {
+    fn from(e: quick_xml::Error) -> Self {
+        Error::ParseError(e.to_string())
+    }
+}
+
+impl From<quick_xml::DeError> for Error {
+    fn from(e: quick_xml::DeError) -> Self {
+        Error::ParseError(e.to_string())
+    }
 }
 
 impl ScanStatus {
@@ -30,61 +45,8 @@ impl ScanStatus {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ScanResult {
-    Nuclei(NucleiScanResult),
-    Nmap(NmapScanResult),
-    Gowitness(GowitnessScanResult),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NucleiScanResult {
-    pub vulnerabilities: Vec<Vulnerability>,
-    pub scan_time: f64,
-    // ... другие поля специфичные для Nuclei
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NmapScanResult {
-    pub hosts: Vec<Host>,
-    pub scan_time: f64,
-    // ... другие поля специфичные для Nmap
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GowitnessScanResult {
-    pub screenshots: Vec<Screenshot>,
-    pub scan_time: f64,
-    // ... другие поля специфичные для Gowitness
-}
-
-// Вспомогательные структуры
-#[derive(Debug, Serialize, Deserialize)]
 pub struct Vulnerability {
     pub name: String,
     pub severity: String,
     pub description: String,
-    // ...
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Host {
-    pub ip: String,
-    pub ports: Vec<Port>,
-    // ...
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Port {
-    pub number: u16,
-    pub state: String,
-    pub service: String,
-    // ...
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Screenshot {
-    pub url: String,
-    pub path: String,
-    pub status_code: u16,
-    // ...
 }

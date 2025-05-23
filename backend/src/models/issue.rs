@@ -1,16 +1,15 @@
-use crate::db::schema::issues;
-use crate::db::schema::projects;
-use crate::dtos::handlers::{IssueForm, CreateIssueForm};
-use crate::models::host::{Host, HostResponse};
-use crate::models::project::Project;
-use crate::models::proof_of_concept::ProofOfConcept;
 use diesel::prelude::*;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::db::schema::*;
 
-    #[derive(Queryable, Selectable, Serialize, Identifiable, Associations, PartialEq, Debug)]
+use crate::db::schema::{issues, projects, *};
+use crate::dtos::handlers::{CreateIssueForm, IssueForm};
+use crate::models::host::{Host, HostResponse};
+use crate::models::project::Project;
+use crate::models::proof_of_concept::ProofOfConcept;
+
+#[derive(Queryable, Selectable, Serialize, Identifiable, Associations, PartialEq, Debug)]
 #[diesel(table_name = issues)]
 #[diesel(primary_key(id))]
 #[diesel(belongs_to(Project, foreign_key = project_id))]
@@ -101,44 +100,49 @@ impl Issue {
                 .execute(conn)?;
 
             // First, delete all existing issue-host relationships
-            diesel::delete(
-                issue_hosts::table
-                    .filter(issue_hosts::issue_id.eq(issue_id))
-            ).execute(conn)?;
+            diesel::delete(issue_hosts::table.filter(issue_hosts::issue_id.eq(issue_id)))
+                .execute(conn)?;
 
             // Then, create new relationships for all hosts in the form
             if !form.hosts.is_empty() {
-                // Получаем ID хостов по одному, так как нам нужно учитывать опциональность hostname
+                // Получаем ID хостов по одному, так как нам нужно учитывать опциональность
+                // hostname
                 let mut host_ids = Vec::new();
-                
+
                 for host in &form.hosts {
                     let mut query = hosts::table.into_boxed();
-                    
+
                     // Добавляем фильтр по IP-адресу
                     query = query.filter(hosts::ip_address.eq(&host.ip_address));
-                    
+
                     // Если есть hostname, добавляем фильтр по нему
                     if let Some(hostname) = &host.hostname {
                         query = query.filter(hosts::hostname.eq(hostname));
                     }
-                    
+
                     if let Ok(host_id) = query.select(hosts::id).first::<i32>(conn) {
                         host_ids.push(host_id);
                     }
                 }
 
                 if !host_ids.is_empty() {
-                    let new_relations: Vec<(Uuid, i32)> = host_ids.iter()
+                    let new_relations: Vec<(Uuid, i32)> = host_ids
+                        .iter()
                         .map(|&host_id| (issue_id, host_id))
                         .collect();
 
                     diesel::insert_into(issue_hosts::table)
-                        .values(&new_relations.iter().map(|&(issue_id, host_id)| {
-                            (
-                                issue_hosts::issue_id.eq(issue_id),
-                                issue_hosts::host_id.eq(host_id)
-                            )
-                        }).collect::<Vec<_>>())
+                        .values(
+                            &new_relations
+                                .iter()
+                                .map(|&(issue_id, host_id)| {
+                                    (
+                                        issue_hosts::issue_id.eq(issue_id),
+                                        issue_hosts::host_id.eq(host_id),
+                                    )
+                                })
+                                .collect::<Vec<_>>(),
+                        )
                         .execute(conn)?;
                 }
             }
@@ -170,8 +174,8 @@ impl Issue {
     }
 
     fn to_full_response(&self, conn: &mut PgConnection) -> QueryResult<IssueFullResponse> {
-        use crate::db::schema::issue_hosts::dsl::*;
         use crate::db::schema::hosts::dsl::*;
+        use crate::db::schema::issue_hosts::dsl::*;
 
         // Сначала получаем ID хостов, связанных с уязвимостью
         let host_ids = issue_hosts
@@ -182,10 +186,7 @@ impl Issue {
         // Затем получаем информацию о хостах
         let related_hosts = hosts
             .filter(id.eq_any(host_ids))
-            .select((
-                hostname,
-                ip_address,
-            ))
+            .select((hostname, ip_address))
             .load::<(Option<String>, String)>(conn)?
             .into_iter()
             .map(|(host, ip)| HostResponse {

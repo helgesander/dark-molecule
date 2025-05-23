@@ -1,16 +1,21 @@
 extern crate chrono;
-use chrono::Utc;
-use log::{error, info};
-use serde::{Deserialize, Serialize};
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+
+use async_trait::async_trait;
+use chrono::Utc;
+use diesel::PgConnection;
+use log::{error, info};
+use serde::{Deserialize, Serialize};
+use serde_json;
 use thiserror::Error;
 use uuid::Uuid;
-use crate::services::scanner::{ScanStatus, VulnerabilityScanner};
+
+use crate::models::scan::{NewScan, Scan};
 use crate::services::scanner::types::Error;
-use async_trait::async_trait;
-use serde_json;
+use crate::services::scanner::{ScanStatus, VulnerabilityScanner};
 
 #[derive(Clone)]
 pub struct NucleiService {
@@ -47,7 +52,6 @@ impl NucleiService {
     pub fn new(scans_dir: impl AsRef<Path> /* nuclei_path: impl Into<String> */) -> Self {
         Self {
             scans_dir: scans_dir.as_ref().to_path_buf(),
-            // nuclei_path: nuclei_path.into(),
         }
     }
 }
@@ -57,14 +61,30 @@ impl VulnerabilityScanner for NucleiService {
     type ScanRequest = NucleiScanRequest;
     type ScanResult = NucleiScanResult;
 
-    async fn create_scan(&self, request: Self::ScanRequest) -> Result<String, Error> {
+    async fn create_scan(
+        &self,
+        conn: &mut PgConnection,
+        project_id: Uuid,
+        request: Self::ScanRequest,
+    ) -> Result<String, Error> {
         let task_id = Uuid::new_v4().to_string();
         let output_dir = self.scans_dir.join(&task_id);
-        std::fs::create_dir_all(&output_dir).map_err(|e| Error::IoError(e))?;
-        
+        fs::create_dir_all(&output_dir).map_err(|_| Error::IoError)?;
+
         let output_file = output_dir.join("results.json");
-        self.run_scan(request, &output_file)?;
-        
+        let new_scan = NewScan {
+            project_id,
+            scanner_type: "nuclei".to_string(),
+            status: "queued".to_string(),
+            target: request.target,
+            result_path: Some(output_file.to_str().ok_or(Error::IoError)?.to_string()),
+        };
+
+        Scan::create_scan(conn, new_scan).map_err(|e| {
+            error!("Error creating scan: {}", e);
+            Error::Database(e.to_string())
+        })?;
+
         Ok(task_id)
     }
 
@@ -78,13 +98,12 @@ impl VulnerabilityScanner for NucleiService {
                 error: None,
             });
         }
-        
-        let content = std::fs::read_to_string(&output_file)
-            .map_err(|e| Error::IoError(e))?;
-            
-        let findings: Vec<NucleiFinding> = serde_json::from_str(&content)
-            .map_err(|e| Error::ParseError(e.to_string()))?;
-            
+
+        let content = fs::read_to_string(&output_file).map_err(|_| Error::IoError)?;
+
+        let findings: Vec<NucleiFinding> =
+            serde_json::from_str(&content).map_err(|e| Error::ParseError(e.to_string()))?;
+
         Ok(NucleiScanResult {
             task_id: task_id.to_string(),
             status: ScanStatus::Completed,
@@ -92,61 +111,4 @@ impl VulnerabilityScanner for NucleiService {
             error: None,
         })
     }
-
-    fn run_scan(
-        &self,
-        request: Self::ScanRequest,
-        output_file: &Path,
-    ) -> Result<Self::ScanResult, Error> {
-        let mut command = Command::new("nuclei");
-
-        // Базовые параметры
-        command
-            .arg("-u")
-            .arg(&request.target)
-            .arg("-json")
-            .arg(output_file);
-
-        // Добавляем шаблоны, если указаны
-        if let Some(templates) = request.templates {
-            command.arg("-t");
-            for template in templates {
-                command.arg(template);
-            }
-        }
-
-        // Добавляем формат вывода, если указан
-        if let Some(format) = request.output_format {
-            command.arg("-output").arg(format);
-        }
-
-        let output = command
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .output()
-            .map_err(|e| Error::IoError(e))?;
-
-        if !output.status.success() {
-            let error = String::from_utf8_lossy(&output.stderr).into_owned();
-            return Err(Error::ExecutionError(error));
-        }
-
-        Ok(Self::ScanResult {
-            task_id: Uuid::new_v4().to_string(),
-            status: ScanStatus::Running,
-            findings: None,
-            error: None,
-        })
-    }
 }
-
-// Вынесите run_scan в отдельную функцию:
-fn run_nuclei_scan(
-    request: NucleiScanRequest,
-    output_file: &Path,
-    task_id: &str,
-    scans_dir: &PathBuf,
-) -> Result<NucleiScanResult, Error> {
-    unimplemented!()
-}
-

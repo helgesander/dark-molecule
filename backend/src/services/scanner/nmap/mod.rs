@@ -1,6 +1,3 @@
 pub mod service;
-pub use service::NmapService;
-pub use service::NmapScanRequest;
-pub use service::NmapScanResult;
+pub use service::{NmapScanRequest, NmapScanResult, NmapService};
 // pub use service::NmapError;
-

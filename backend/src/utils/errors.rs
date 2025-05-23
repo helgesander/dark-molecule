@@ -1,10 +1,7 @@
 use actix_multipart::MultipartError;
 use actix_web::error::BlockingError;
-use actix_web::{
-    error,
-    http::{header, StatusCode},
-    HttpResponse,
-};
+use actix_web::http::{header, StatusCode};
+use actix_web::{error, HttpResponse};
 use derive_more::{Display, Error};
 use diesel::r2d2::Error as R2D2Error;
 use diesel::result::Error as DieselError;

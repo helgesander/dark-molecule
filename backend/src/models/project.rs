@@ -1,13 +1,13 @@
-use crate::dtos::handlers::ProjectForm;
-use crate::models::host::Host;
-use crate::models::issue::Issue;
 use chrono::NaiveDate;
 use diesel::associations::HasTable;
 use diesel::prelude::*;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::models::host::HostResponse;
+
+use crate::dtos::handlers::ProjectForm;
+use crate::models::host::{Host, HostResponse};
+use crate::models::issue::Issue;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Deserialize, Debug)]
 #[diesel(table_name = crate::db::schema::projects)]
@@ -58,7 +58,6 @@ pub struct ProjectOverviewResponse {
     pub scope: Option<String>,
 }
 
-
 impl Project {
     pub fn get_project_by_id(
         conn: &mut PgConnection,
@@ -79,9 +78,6 @@ impl Project {
     pub fn get_project_by_name(conn: &mut PgConnection, name: String) {
         unimplemented!()
     }
-        
-        
-
 
     pub fn get_projects(conn: &mut PgConnection) -> QueryResult<Vec<ProjectOverviewResponse>> {
         use crate::db::schema::projects::dsl::*;
@@ -112,7 +108,8 @@ impl Project {
         };
         diesel::insert_into(projects)
             .values(new_project)
-            .get_result::<Project>(conn) // TODO: change this method to add work with team id
+            .get_result::<Project>(conn) // TODO: change this method to add work
+                                         // with team id
     }
 
     pub fn update_project(
@@ -147,7 +144,7 @@ impl Project {
         Ok(ProjectFullResponse {
             id: self.id,
             name: self.name.clone(),
-            description: self.description.clone().unwrap_or_else(|| String::new()), // TODO: maybe change after to Option
+            description: self.description.clone().unwrap_or_else(|| String::new()), /* TODO: maybe change after to Option */
             scope: self.scope.clone().unwrap_or_else(|| String::new()),
             start_date: self.start_date,
             end_date: self.end_date,

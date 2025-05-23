@@ -1,13 +1,14 @@
-use crate::db::schema::users;
-use crate::db::schema::users::dsl::*;
-use crate::db::schema::users::id;
-use crate::dtos::db::UserForm;
-use crate::utils::FilterObjects;
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use log::debug;
 use serde::Serialize;
 use uuid::Uuid;
+
+use crate::db::schema::users;
+use crate::db::schema::users::dsl::*;
+use crate::db::schema::users::id;
+use crate::dtos::db::UserForm;
+use crate::utils::FilterObjects;
 
 #[derive(Queryable, Selectable, Identifiable, Debug, Serialize)]
 #[diesel(table_name = users)]
@@ -68,18 +69,16 @@ impl User {
         if let Some(page) = filter_data.page {
             query = query.offset(page as i64 * filter_data.size.unwrap_or(10) as i64);
         }
-        
+
         if let Some(name_filter) = &filter_data.name {
             query = query.filter(username.eq(name_filter));
         }
-        
+
         if let Some(size_limit) = filter_data.size {
             query = query.limit(size_limit as i64);
         }
-        
-        let all_users: Vec<User> = query
-            .order(created_at.asc())
-            .load(conn)?;
+
+        let all_users: Vec<User> = query.order(created_at.asc()).load(conn)?;
 
         let mut result: Vec<UserResponse> = Vec::new();
         for user in all_users {

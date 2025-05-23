@@ -1,7 +1,8 @@
-use crate::utils::errors::AppError;
 use actix_web::{get, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
+
+use crate::utils::errors::AppError;
 
 #[get("/settings")]
 pub async fn get_admin_settings_handler(

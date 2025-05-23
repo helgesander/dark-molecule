@@ -1,12 +1,12 @@
 pub mod config;
 pub mod errors;
 
-use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2,
-};
-use serde::{Deserialize, Serialize};
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
+use argon2::Argon2;
 use log::debug;
+use serde::{Deserialize, Serialize};
+
 use crate::utils::errors::AppError;
 
 #[derive(Deserialize)]
@@ -34,11 +34,10 @@ pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Er
 
 pub fn verify_password(hash: &str, password: &str) -> Result<bool, AppError> {
     debug!("Verifying password: {}", hash);
-    let parsed_hash = PasswordHash::new(hash)
-        .map_err(|e| {
-            debug!("Error parsing password hash: {}", e);
-            AppError::InternalServerError
-        })?;
+    let parsed_hash = PasswordHash::new(hash).map_err(|e| {
+        debug!("Error parsing password hash: {}", e);
+        AppError::InternalServerError
+    })?;
 
     match Argon2::default().verify_password(password.as_bytes(), &parsed_hash) {
         Ok(_) => Ok(true),
@@ -46,6 +45,6 @@ pub fn verify_password(hash: &str, password: &str) -> Result<bool, AppError> {
         Err(e) => {
             debug!("Error verifying password: {}", e);
             Err(AppError::InternalServerError)
-        }
+        },
     }
 }

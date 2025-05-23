@@ -1,14 +1,16 @@
 use std::io::Read;
-use actix_web::{web, post, get, HttpResponse};
-use crate::utils::errors::AppError;
-use crate::models::report_template::*;
+
+use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::text::Text;
+use actix_multipart::form::MultipartForm;
+use actix_web::{get, post, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
-use actix_multipart::form::tempfile::TempFile;
-use actix_multipart::form::MultipartForm;
-use actix_multipart::form::text::Text;
-use crate::dtos::handlers::{UploadReportTemplateForm, ReportTemplateForm};
 use log::{debug, error};
+
+use crate::dtos::handlers::{ReportTemplateForm, UploadReportTemplateForm};
+use crate::models::report_template::*;
+use crate::utils::errors::AppError;
 
 #[get("/all")]
 pub async fn get_templates_preview_handler(
@@ -30,8 +32,8 @@ pub async fn get_templates_preview_handler(
 
 #[get("/{id}")]
 pub async fn get_template_handler(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>, 
-    path: web::Path<i32>
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    path: web::Path<i32>,
 ) -> Result<HttpResponse, AppError> {
     let id = path.into_inner();
     let template = web::block(move || {
@@ -51,9 +53,8 @@ pub async fn get_template_handler(
 #[post("/")]
 pub async fn create_template_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    MultipartForm(form): MultipartForm<UploadReportTemplateForm>
+    MultipartForm(form): MultipartForm<UploadReportTemplateForm>,
 ) -> Result<HttpResponse, AppError> {
-
     let (file_data, filename) = if let Some(some_file) = form.file {
         let mut data: Vec<u8> = Vec::new();
         let mut file = some_file.file.as_file();
@@ -73,7 +74,7 @@ pub async fn create_template_handler(
     let new_template = ReportTemplateForm {
         file: file_data,
         filename,
-        name: form.name.clone()
+        name: form.name.clone(),
     };
 
     debug!("Get new template: {}", new_template.name);
@@ -92,6 +93,3 @@ pub async fn create_template_handler(
 
     Ok(HttpResponse::Created().json(template))
 }
-            
-
-

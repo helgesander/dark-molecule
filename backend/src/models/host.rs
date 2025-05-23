@@ -1,9 +1,10 @@
-use crate::db::schema::projects;
-use crate::dtos::handlers::HostForm;
-use crate::{db::schema::hosts, models::project::Project};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::db::schema::{hosts, projects};
+use crate::dtos::handlers::HostForm;
+use crate::models::project::Project;
 
 #[derive(Queryable, Identifiable, Serialize, Selectable, Associations, PartialEq, Debug)]
 #[diesel(table_name = hosts)]
@@ -25,7 +26,7 @@ pub struct NewHost {
     project_id: Uuid,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct HostResponse {
     pub hostname: Option<String>,
     pub ip_address: String,
@@ -37,16 +38,17 @@ impl Host {
         id_project: Uuid,
     ) -> QueryResult<Vec<HostResponse>> {
         use crate::db::schema::hosts::dsl::*;
-        
+
         // Находим проект
         let project = match projects::table
             .find(id_project)
             .select(Project::as_select())
             .first(conn)
-            .optional()? {
-                Some(p) => p,
-                None => return Ok(Vec::new()),
-            };
+            .optional()?
+        {
+            Some(p) => p,
+            None => return Ok(Vec::new()),
+        };
 
         // Получаем хосты для проекта
         let selected_hosts = Host::belonging_to(&project)

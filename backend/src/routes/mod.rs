@@ -1,10 +1,11 @@
 use actix_web::middleware::from_fn;
-use crate::handlers::{
-    admin_handlers, auth_handlers, project_handlers,
-    team_handlers, scan_handlers, user_handlers, template_handlers
-};
 use actix_web::web;
 use actix_web::web::service;
+
+use crate::handlers::{
+    admin_handlers, auth_handlers, project_handlers, team_handlers, template_handlers,
+    user_handlers,
+};
 use crate::middleware::auth::auth_middleware;
 
 // TODO: add auth wrappers for all routes
@@ -27,6 +28,8 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
             .service(project_handlers::create_report_handler)
             .service(project_handlers::get_report_previews_for_project_handler)
             .service(project_handlers::get_report_handler)
+            .service(project_handlers::get_scan_result_handler)
+            .service(project_handlers::start_scan_handler),
     );
 }
 
@@ -48,7 +51,7 @@ fn init_auth_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/auth")
             .service(auth_handlers::auth_handler)
-            .service(auth_handlers::logout_handler)
+            .service(auth_handlers::logout_handler),
     );
 }
 
@@ -76,15 +79,6 @@ fn init_admin_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(web::scope("/admin").service(admin_handlers::get_admin_settings_handler));
 }
 
-fn init_scan_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/scan")
-            .service(scan_handlers::get_scan_result_handler)
-            .service(scan_handlers::start_scan_handler)
-            .service(scan_handlers::confirm_scan_handler),
-    );
-}
-
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")
@@ -92,7 +86,6 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
             .configure(init_project_routes)
             .configure(init_auth_routes)
             .configure(init_admin_routes)
-            .configure(init_scan_routes)
             .configure(init_team_routes)
             .configure(init_template_routes),
     );

@@ -82,17 +82,15 @@ diesel::table! {
 
 diesel::table! {
     scans (id) {
-        id -> Int4,
+        id -> Uuid,
         project_id -> Uuid,
         #[max_length = 50]
         scanner_type -> Varchar,
         #[max_length = 20]
         status -> Varchar,
-        started_at -> Nullable<Timestamptz>,
-        completed_at -> Nullable<Timestamptz>,
-        error_message -> Nullable<Text>,
-        scan_config -> Nullable<Jsonb>,
-        results_path -> Nullable<Text>,
+        result_path -> Nullable<Text>,
+        #[max_length = 100]
+        target -> Varchar,
     }
 }
 

@@ -41,5 +41,4 @@ COPY entrypoint.sh .
 COPY src/db src/db
 COPY migrations migrations
 COPY diesel.toml .
-RUN chmod +x entrypoint.sh
 ENTRYPOINT ["./entrypoint.sh"]

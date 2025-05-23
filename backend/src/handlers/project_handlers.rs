@@ -1,26 +1,35 @@
-use actix_multipart::form::MultipartForm;
+use std::io::Read;
+
 use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::text::Text;
-use crate::dtos::handlers::{HostForm, IssueForm, ProjectForm, ProofOfConceptForm, CreateIssueForm, ReportForm};
-use crate::models::host::Host;
-use crate::models::issue::Issue;
-use crate::models::project::Project;
-use crate::models::proof_of_concept::ProofOfConcept;
-use crate::utils::errors::{AppError, AppErrorJson};
+use actix_multipart::form::MultipartForm;
 use actix_multipart::Multipart;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use futures::{StreamExt, TryStreamExt};
 use log::error;
-use uuid::Uuid;
-use crate::db::schema::teams::description;
-use std::io::Read;
+use serde::{Deserialize, Serialize};
 use utoipa::openapi::security::Http;
+use uuid::Uuid;
+
+use crate::db::schema::teams::description;
+use crate::dtos::handlers::{
+    CreateIssueForm, HostForm, IssueForm, ProjectForm, ProofOfConceptForm, ReportForm,
+};
+use crate::models::host::Host;
+use crate::models::issue::Issue;
+use crate::models::project::Project;
+use crate::models::proof_of_concept::ProofOfConcept;
 use crate::models::report::Report;
 use crate::models::report_template::ReportTemplate;
-use crate::services::report::{MarkdownService, ReportGenerator};
+use crate::models::scan::Scan;
 use crate::services;
+use crate::services::report::{MarkdownService, ReportGenerator};
+use crate::services::scanner::nmap::service::NmapScanRequest;
+use crate::services::scanner::nuclei::NucleiScanRequest;
+use crate::services::scanner::{ScannerService, VulnerabilityScanner};
+use crate::utils::errors::{AppError, AppErrorJson};
 
 #[get("/")]
 pub async fn get_projects_handler(
@@ -39,7 +48,6 @@ pub async fn get_projects_handler(
     .await??;
     Ok(HttpResponse::Ok().json(projects))
 }
-
 
 #[post("/")]
 pub async fn create_project_handler(
@@ -91,7 +99,7 @@ pub async fn get_project_handler(
         Err(err) => {
             error!("Database query error: {}", err);
             Err(err)
-        }
+        },
     }
 }
 
@@ -119,7 +127,6 @@ pub async fn get_issues_handler(
     Ok(HttpResponse::Ok().json(issues))
 }
 
-
 #[get("/{id}/hosts")]
 pub async fn get_hosts_handler(
     id: web::Path<String>,
@@ -143,7 +150,6 @@ pub async fn get_hosts_handler(
     .await??;
     Ok(HttpResponse::Ok().json(hosts))
 }
-
 
 #[delete("/{project_id}/issue/{issue_id}")]
 pub async fn delete_issue_handler(
@@ -169,7 +175,6 @@ pub async fn delete_issue_handler(
         _ => Err(AppError::InternalServerError),
     }
 }
-
 
 #[put("/{project_id}/issue/{issue_id}")]
 pub async fn update_issue_handler(
@@ -338,7 +343,8 @@ pub async fn create_poc_handler(
 
     let (file_data, content_type) = if let Some(file) = form.file {
         let mut data = Vec::new();
-        let content_type = file.content_type
+        let content_type = file
+            .content_type
             .map(|mime| mime.to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
         let mut file = file.file.as_file();
@@ -424,7 +430,7 @@ pub async fn get_poc_data_handler(
 #[get("/{project_id}/report/all")]
 pub async fn get_report_previews_for_project_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    path: web::Path<String>
+    path: web::Path<String>,
 ) -> Result<HttpResponse, AppError> {
     let _project_id = path.into_inner();
     let project_id = Uuid::parse_str(&_project_id).map_err(|_| AppError::BadRequest)?;
@@ -439,7 +445,7 @@ pub async fn get_report_previews_for_project_handler(
             AppError::DatabaseError
         })
     })
-        .await??;
+    .await??;
     Ok(HttpResponse::Ok().json(reports))
 }
 
@@ -481,12 +487,21 @@ pub async fn create_report_handler(
                 AppError::NotFound
             })?;
 
-        let mut report = service.generate(&project_data, &template_data).map_err(|e| {
-            error!("Failed to generate report: {}", e);
-            AppError::InternalServerError
-        })?;
+        let mut report = service
+            .generate(&project_data, &template_data)
+            .map_err(|e| {
+                error!("Failed to generate report: {}", e);
+                AppError::InternalServerError
+            })?;
 
-        service.save_report(&mut conn, project_id, report.filename.clone(), report.content.clone(), template_data.id)
+        service
+            .save_report(
+                &mut conn,
+                project_id,
+                report.filename.clone(),
+                report.content.clone(),
+                template_data.id,
+            )
             .map_err(|e| {
                 error!("Failed to save report: {}", e);
                 AppError::DatabaseError
@@ -499,7 +514,7 @@ pub async fn create_report_handler(
         .content_type(mime_guess::from_path(&report_data.format).first_or_octet_stream())
         .append_header((
             "Content-Disposition",
-            format!("attachment; filename=\"{}\"", report_data.filename)
+            format!("attachment; filename=\"{}\"", report_data.filename),
         ))
         .body(report_data.content))
 }
@@ -507,7 +522,7 @@ pub async fn create_report_handler(
 #[get("/{project_id}/report/{report_id}")]
 pub async fn get_report_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    path: web::Path<(String, i32)>
+    path: web::Path<(String, i32)>,
 ) -> Result<HttpResponse, AppError> {
     let (_, report_id) = path.into_inner();
     let report_data = web::block(move || {
@@ -520,12 +535,123 @@ pub async fn get_report_handler(
             AppError::DatabaseError
         })
     })
-        .await??;
+    .await??;
     Ok(HttpResponse::Ok()
         .content_type(mime_guess::from_path(&report_data.filename).first_or_octet_stream())
         .append_header((
             "Content-Disposition",
-            format!("attachment; filename=\"{}\"", report_data.filename)
+            format!("attachment; filename=\"{}\"", report_data.filename),
         ))
         .body(report_data.data))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ScanRequest {
+    pub r#type: String,
+    pub target: String,
+    // pub proxy: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ScanResponse {
+    pub task_id: String,
+    pub status: String,
+}
+
+#[post("/{project_id}/scan")]
+pub async fn start_scan_handler(
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    scanner_service: web::Data<ScannerService>,
+    request: web::Json<ScanRequest>,
+) -> Result<HttpResponse, AppError> {
+    web::block(async move || {
+        let mut conn = pool.get().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::DatabaseError
+        })?;
+        match request.r#type.as_str() {
+            "nuclei" => {
+                let nuclei = scanner_service.get_nuclei().await;
+                let mut scanner = nuclei.lock().await;
+                let req = NucleiScanRequest {
+                    target: request.target.clone(),
+                    templates: None,
+                    severity: None,
+                    output_format: None,
+                };
+                match scanner.create_scan(req, &mut conn).await {
+                    Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
+                        task_id,
+                        status: "queued".to_string(),
+                    })),
+                    Err(e) => Err(AppError::InternalServerError),
+                }
+            },
+            "nmap" => {
+                let nmap = scanner_service.get_nmap().await;
+                let mut scanner = nmap.lock().await;
+                let req = NmapScanRequest {
+                    target: request.target.clone(),
+                };
+                match scanner.create_scan(req).await {
+                    Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
+                        task_id,
+                        status: "queued".to_string(),
+                    })),
+                    Err(e) => Err(AppError::InternalServerError),
+                }
+            },
+            _ => Err(AppError::BadRequest),
+        }
+    })
+    .await
+}
+
+#[get("/{project_id}/scan/{scanner_type}/{task_id}")]
+pub async fn get_scan_result_handler(
+    scanner_service: web::Data<ScannerService>,
+    path: web::Path<(String, String)>,
+) -> Result<HttpResponse, AppError> {
+    let (scanner_type, task_id) = path.into_inner();
+    match scanner_type.as_str() {
+        "nuclei" => {
+            let nuclei = scanner_service.get_nuclei().await;
+            let mut scanner = nuclei.lock().await;
+            match scanner.get_scan_result(&task_id).await {
+                Ok(result) => Ok(HttpResponse::Ok().json(result)),
+                Err(e) => Err(AppError::InternalServerError),
+            }
+        },
+        "nmap" => {
+            let nmap = scanner_service.get_nmap().await;
+            let mut scanner = nmap.lock().await;
+            match scanner.get_scan_result(&task_id).await {
+                Ok(result) => Ok(HttpResponse::Ok().json(result)),
+                Err(e) => Err(AppError::InternalServerError),
+            }
+        },
+        _ => Err(AppError::BadRequest),
+    }
+}
+
+#[get("/{project_id}/scan/all")]
+pub async fn get_scan_all_handler(
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    path: web::Path<String>,
+) -> Result<HttpResponse, AppError> {
+    let id = path.into_inner();
+    let project_id = Uuid::parse_str(id.as_str()).map_err(|_| AppError::BadRequest)?;
+
+    let scans = web::block(move || {
+        let mut conn = pool.get().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::DatabaseError
+        })?;
+        Scan::get_scans_by_project_id(&mut conn, project_id).map_err(|e| {
+            error!("Failed to get scans by project id: {}", e);
+            AppError::DatabaseError
+        })
+    })
+    .await??;
+    Ok(HttpResponse::Ok().json(scans))
 }

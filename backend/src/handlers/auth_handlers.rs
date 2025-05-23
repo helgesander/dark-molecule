@@ -1,14 +1,15 @@
-use crate::middleware::auth::{Role, UserSession};
-use crate::models::user::User;
-use crate::utils::errors::AppError;
 use actix_session::Session;
 use actix_web::{post, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use log::error;
 use serde::Deserialize;
-use validator::Validate;
 use uuid::Uuid;
+use validator::Validate;
+
+use crate::middleware::auth::{Role, UserSession};
+use crate::models::user::User;
+use crate::utils::errors::AppError;
 use crate::utils::verify_password;
 
 #[derive(Deserialize, Validate)]

@@ -1,11 +1,13 @@
-use crate::db::schema::users::id;
-use crate::{
-    db::schema::teams, db::schema::users::dsl::users, dtos::db::TeamForm, models::user::User,
-};
 use diesel::prelude::*;
 use log::debug;
 use serde::Serialize;
 use uuid::Uuid;
+
+use crate::db::schema::teams;
+use crate::db::schema::users::dsl::users;
+use crate::db::schema::users::id;
+use crate::dtos::db::TeamForm;
+use crate::models::user::User;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Associations, PartialEq, Debug)]
 #[diesel(table_name = crate::db::schema::teams)]
@@ -22,7 +24,7 @@ pub struct Team {
 impl Team {
     pub fn create_team(conn: &mut PgConnection, form: &TeamForm) -> QueryResult<Team> {
         debug!("Create team with data: {:?}", form);
-        
+
         // Verify that the admin user exists
         users
             .filter(id.eq(form.admin_id))

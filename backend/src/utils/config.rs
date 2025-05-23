@@ -1,9 +1,10 @@
+use std::sync::Arc;
+use std::{env, fs};
+
 use actix_web::cookie::Key;
 use dotenv::dotenv;
-use std::{env, fs};
 use once_cell::sync::Lazy;
 use serde::Deserialize;
-use std::sync::Arc;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct DatabaseConfig {
@@ -34,15 +35,18 @@ impl AppConfig {
         let scans_path = env::var("SCANS_PATH").unwrap_or("/app/scans/".into());
         let reports_path = env::var("REPORTS_PATH").unwrap_or("/app/reports/".into());
 
-        Self::create_dirs_if_doesnt_exist(templates_path.clone(),
-                                          scans_path.clone(),
-                                          reports_path.clone())
-            .unwrap();
+        Self::create_dirs_if_doesnt_exist(
+            templates_path.clone(),
+            scans_path.clone(),
+            reports_path.clone(),
+        )
+        .unwrap();
 
         Self {
             database: DatabaseConfig {
-                url: env::var("DATABASE_URL")
-                    .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/dark_molecule".to_string()),
+                url: env::var("DATABASE_URL").unwrap_or_else(|_| {
+                    "postgres://postgres:postgres@localhost:5432/dark_molecule".to_string()
+                }),
                 max_connections: env::var("DATABASE_MAX_CONNECTIONS")
                     .ok()
                     .and_then(|v| v.parse().ok())
@@ -63,7 +67,11 @@ impl AppConfig {
         }
     }
 
-    fn create_dirs_if_doesnt_exist(templates: String, scans: String, reports: String) -> std::io::Result<()> {
+    fn create_dirs_if_doesnt_exist(
+        templates: String,
+        scans: String,
+        reports: String,
+    ) -> std::io::Result<()> {
         fs::create_dir_all(&templates)?;
         fs::create_dir_all(&scans)?;
         fs::create_dir_all(&reports)

@@ -17,4 +17,3 @@ pub struct Report {
     pub format: String,
     pub generated_at: DateTime<Utc>,
 }
-

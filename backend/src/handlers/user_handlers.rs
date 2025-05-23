@@ -1,14 +1,15 @@
-use crate::dtos::db::UserForm;
-use crate::dtos::handlers::UserData;
-use crate::models::user::User;
-use crate::utils::errors::AppError;
-use crate::utils::{hash_password, FilterObjects};
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use log::{debug, error};
 use uuid::Uuid;
 use validator::Validate;
+
+use crate::dtos::db::UserForm;
+use crate::dtos::handlers::UserData;
+use crate::models::user::User;
+use crate::utils::errors::AppError;
+use crate::utils::{hash_password, FilterObjects};
 
 #[get("/{id}")]
 pub async fn get_user_handler(
@@ -38,12 +39,12 @@ pub async fn get_user_handler(
         Ok(Some(user)) => {
             let user_data = UserData::new(&user);
             Ok(HttpResponse::Ok().json(user_data))
-        }
+        },
         Ok(None) => Err(AppError::NotFound),
         Err(err) => {
             error!("Database query error: {}", err);
             Err(AppError::InternalServerError)
-        }
+        },
     }
 }
 #[post("/")]
@@ -113,7 +114,8 @@ pub async fn get_users_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     filter_data: web::Query<FilterObjects>,
 ) -> actix_web::Result<HttpResponse, AppError> {
-    // TODO: change return of all object of user, need create other response struct which will return data without password
+    // TODO: change return of all object of user, need create other response struct
+    // which will return data without password
     let users = web::block(move || {
         let mut conn = pool.get().map_err(|e| {
             error!("Failed to get database connection: {}", e);

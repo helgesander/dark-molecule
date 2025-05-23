@@ -1,12 +1,14 @@
 use std::fs;
-use crate::db::schema::report_templates;
+
 use diesel::prelude::*;
 use diesel::{Identifiable, PgConnection, QueryResult, Queryable, RunQueryDsl, Selectable};
-use serde::Serialize;
-use crate::dtos::handlers::{ReportTemplateForm, UploadReportTemplateForm};
 use log::error;
-use crate::utils::errors::AppError;
+use serde::Serialize;
+
+use crate::db::schema::report_templates;
+use crate::dtos::handlers::{ReportTemplateForm, UploadReportTemplateForm};
 use crate::utils::config::CONFIG;
+use crate::utils::errors::AppError;
 
 #[derive(Queryable, Selectable, Identifiable, Serialize)]
 #[diesel(table_name = report_templates)]
@@ -34,9 +36,12 @@ pub struct ReportTemplatePreview {
 }
 
 impl ReportTemplate {
-    pub fn get_template_by_id(conn: &mut PgConnection, template_id: i32) -> QueryResult<Option<ReportTemplate>> {
+    pub fn get_template_by_id(
+        conn: &mut PgConnection,
+        template_id: i32,
+    ) -> QueryResult<Option<ReportTemplate>> {
         use crate::db::schema::report_templates::dsl::*;
-        
+
         report_templates
             .filter(id.eq(template_id))
             .select(ReportTemplate::as_select())
@@ -44,21 +49,24 @@ impl ReportTemplate {
             .optional()
     }
 
-    pub fn create_template(conn: &mut PgConnection, template: &ReportTemplateForm) -> QueryResult<()> {
+    pub fn create_template(
+        conn: &mut PgConnection,
+        template: &ReportTemplateForm,
+    ) -> QueryResult<()> {
         use crate::db::schema::report_templates::dsl::*;
 
         let template_file_path = format!("{}/{}", CONFIG.templates_path, template.filename);
-        let file_extension = template.filename
+        let file_extension = template
+            .filename
             .split('.')
             .last()
             .unwrap_or("txt")
             .to_string();
 
-        fs::write(&template_file_path, template.file.clone())
-            .map_err(|e| {
-                error!("Unable to write template file: {}", e);
-                diesel::result::Error::DeserializationError(Box::new(e))
-            })?;
+        fs::write(&template_file_path, template.file.clone()).map_err(|e| {
+            error!("Unable to write template file: {}", e);
+            diesel::result::Error::DeserializationError(Box::new(e))
+        })?;
 
         diesel::insert_into(report_templates)
             .values(NewReportTemplate {
@@ -79,11 +87,13 @@ impl ReportTemplate {
 
         Ok(templates
             .into_iter()
-            .map(|(template_id, template_name, template_extension)| ReportTemplatePreview {
-                id: template_id,
-                name: template_name,
-                extension: template_extension,
-            })
+            .map(
+                |(template_id, template_name, template_extension)| ReportTemplatePreview {
+                    id: template_id,
+                    name: template_name,
+                    extension: template_extension,
+                },
+            )
             .collect())
     }
 }

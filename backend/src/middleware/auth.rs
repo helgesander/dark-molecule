@@ -1,4 +1,3 @@
-use crate::utils::errors::AppError;
 use actix_session::SessionExt;
 use actix_web::body::MessageBody;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse};
@@ -6,6 +5,8 @@ use actix_web::middleware::Next;
 use actix_web::Error;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::utils::errors::AppError;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Role {

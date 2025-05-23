@@ -1,10 +1,11 @@
-use crate::models::user::User;
+use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::text::Text;
+use actix_multipart::form::MultipartForm;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use actix_multipart::form::text::Text;
-use actix_multipart::form::tempfile::TempFile;
-use actix_multipart::form::MultipartForm;
 use uuid::Uuid;
+
+use crate::models::user::User;
 
 #[derive(Serialize)]
 pub struct UserData {
@@ -65,7 +66,7 @@ pub struct UploadReportTemplateForm {
 pub struct ReportTemplateForm {
     pub file: Vec<u8>,
     pub filename: String,
-    pub name: String
+    pub name: String,
 }
 
 #[derive(Deserialize)]
