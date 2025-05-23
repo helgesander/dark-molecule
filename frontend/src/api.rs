@@ -194,8 +194,6 @@ impl ApiClient {
         log::info!("Fetching projects from {}", format!("{}/project/", self.base_url));
         
         let response = Request::get(&format!("{}/project/", self.base_url))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
             .send()
             .await
             .map_err(|e| {
@@ -245,8 +243,6 @@ impl ApiClient {
 
     pub async fn get_teams(&self) -> Result<Vec<Team>, String> {
         let response = Request::get(&format!("{}/team/", self.base_url))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
             .send()
             .await
             .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
@@ -271,8 +267,6 @@ impl ApiClient {
 
 
         let response = Request::post(&format!("{}/project/", self.base_url))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
             .json(&project)
             .unwrap()
             .send()
@@ -642,8 +636,6 @@ impl ApiClient {
 
     pub async fn get_hosts(&self, project_id: Uuid) -> Result<Vec<Host>, String> {
         let response = Request::get(&format!("{}/project/{}/hosts", self.base_url, project_id))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
             .send()
             .await
             .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
@@ -660,8 +652,6 @@ impl ApiClient {
 
     pub async fn create_host(&self, project_id: Uuid, host: CreateHostRequest) -> Result<Host, String> {
         let response = Request::post(&format!("{}/project/{}/host", self.base_url, project_id))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
             .json(&host)
             .unwrap()
             .send()
@@ -679,8 +669,6 @@ impl ApiClient {
 
     pub async fn update_host(&self, project_id: Uuid, host: CreateHostRequest) -> Result<Host, String> {
         let response = Request::put(&format!("{}/project/{}/host", self.base_url, project_id))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
             .json(&host)
             .unwrap()
             .send()
@@ -698,7 +686,6 @@ impl ApiClient {
 
     pub async fn get_report_templates(&self) -> Result<Vec<ReportTemplatePreview>, String> {
         let response = Request::get(&format!("{}/templates/all", self.base_url))
-            .header("Content-Type", "application/json")
             .send()
             .await
             .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
@@ -714,7 +701,6 @@ impl ApiClient {
 
     pub async fn create_report_template(&self, form: web_sys::FormData) -> Result<(), String> {
         let response = Request::post(&format!("{}/template/", self.base_url))
-            // .header("Content-Type", "multipart/form-data")
             .body(&form)
             .unwrap()
             .send()

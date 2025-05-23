@@ -89,10 +89,16 @@ pub fn project_issues(props: &ProjectIssuesProps) -> Html {
                     }
                 } else {
                     html! {
+                        <>
                         <button class="create-issue-button" onclick={Callback::from(move |_| show_create_form.set(true))}>
                             <img src="/static/icons/plus.svg" class="icon" alt="Создать" />
-                            {"Добавить уязвимость"}
+                            {"Добавить"}
                         </button>
+                        <button class="btn btn-primary">
+                            <img src="/static/icons/plus.svg" class="icon" alt="Создать" />
+                            {"Создать с помощью"}
+                        </button>
+                        </>
                     }
                 }}
             </div>
