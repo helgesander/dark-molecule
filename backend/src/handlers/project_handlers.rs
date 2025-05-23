@@ -562,9 +562,11 @@ pub struct ScanResponse {
 pub async fn start_scan_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     scanner_service: web::Data<ScannerService>,
+    path: web::Path<String>,
     request: web::Json<ScanRequest>,
 ) -> Result<HttpResponse, AppError> {
-    web::block(async move || {
+    let project_id = path.into_inner();
+    let project_id = Uuid::parse_str(&project_id).map_err(|_| AppError::BadRequest)?;
         let mut conn = pool.get().map_err(|e| {
             error!("Failed to get database connection: {}", e);
             AppError::DatabaseError
@@ -579,7 +581,7 @@ pub async fn start_scan_handler(
                     severity: None,
                     output_format: None,
                 };
-                match scanner.create_scan(req, &mut conn).await {
+                match scanner.create_scan(&mut conn, project_id, req).await {
                     Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
                         task_id,
                         status: "queued".to_string(),
@@ -593,7 +595,7 @@ pub async fn start_scan_handler(
                 let req = NmapScanRequest {
                     target: request.target.clone(),
                 };
-                match scanner.create_scan(req).await {
+                match scanner.create_scan(&mut conn, project_id, req).await {
                     Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
                         task_id,
                         status: "queued".to_string(),
@@ -603,8 +605,6 @@ pub async fn start_scan_handler(
             },
             _ => Err(AppError::BadRequest),
         }
-    })
-    .await
 }
 
 #[get("/{project_id}/scan/{scanner_type}/{task_id}")]
@@ -647,7 +647,7 @@ pub async fn get_scan_all_handler(
             error!("Failed to get database connection: {}", e);
             AppError::DatabaseError
         })?;
-        Scan::get_scans_by_project_id(&mut conn, project_id).map_err(|e| {
+        Scan::find_by_project(&mut conn, project_id).map_err(|e| {
             error!("Failed to get scans by project id: {}", e);
             AppError::DatabaseError
         })

@@ -19,6 +19,7 @@ use crate::models::host::HostResponse;
 use crate::models::scan::{NewScan, Scan, UpdateScan};
 use crate::services::scanner::types::Error;
 use crate::services::scanner::VulnerabilityScanner;
+use crate::db::Pool;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ScanStatus {
@@ -76,6 +77,7 @@ struct Address {
 pub struct NmapService {
     scans_dir: PathBuf,
     active_scans: Arc<Mutex<HashMap<String, ScanState>>>,
+    pool: Pool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -89,10 +91,11 @@ pub struct NmapScanResult {
 }
 
 impl NmapService {
-    pub fn new(scans_dir: impl AsRef<Path>) -> Self {
+    pub fn new(scans_dir: impl AsRef<Path>, pool: Pool) -> Self {
         Self {
             scans_dir: scans_dir.as_ref().to_path_buf(),
             active_scans: Arc::new(Mutex::new(HashMap::new())),
+            pool,
         }
     }
 
@@ -115,14 +118,14 @@ impl NmapService {
 
     async fn update_scan_status(
         &self,
-        conn: &mut PgConnection,
         scan_id: Uuid,
         status: ScanStatus,
     ) -> Result<(), Error> {
         let mut scans = self.active_scans.lock().await;
         if let Some(state) = scans.get_mut(&scan_id.to_string()) {
             let status_str: String = status.clone().into();
-            Scan::update_scan(conn, scan_id, UpdateScan { status: status_str })
+            let mut conn = self.pool.get().map_err(|e| Error::Database(e.to_string()))?;
+            Scan::update_scan(&mut conn, scan_id, UpdateScan { status: status_str })
                 .map_err(|e| Error::Database(e.to_string()))?;
             state.status = status;
         }
@@ -131,7 +134,6 @@ impl NmapService {
 
     async fn process_scan_result(
         &self,
-        conn: &mut PgConnection,
         scan_id: Uuid,
     ) -> Result<(), Error> {
         let output_file = self.scans_dir.join(scan_id.to_string()).join("result.xml");
@@ -146,7 +148,7 @@ impl NmapService {
 
         let result_host = NmapService::parse_up_hosts(&content)?;
         let mut result: Vec<HostResponse> = Vec::new();
-
+        
         for host in result_host {
             result.push(HostResponse {
                 hostname: None,
@@ -155,7 +157,7 @@ impl NmapService {
         }
 
         let scan_result = NmapScanResult { hosts: result };
-
+        
         let mut scans = self.active_scans.lock().await;
         if let Some(state) = scans.get_mut(&scan_id.to_string()) {
             state.result = Some(scan_result);
@@ -193,7 +195,7 @@ impl VulnerabilityScanner for NmapService {
         drop(scans);
 
         let output_file = output_dir.join("result.xml");
-
+        
         // Create scan record in database
         let new_scan = NewScan {
             project_id,
@@ -204,39 +206,39 @@ impl VulnerabilityScanner for NmapService {
         };
 
         let scan = Scan::create_scan(conn, new_scan).map_err(|e| Error::Database(e.to_string()))?;
-
+        
         // Start scan in background
         let service = self.clone();
         let scan_id_clone = scan_id;
-
+        let target = request.target.clone();
+        
         tokio::spawn(async move {
             if let Err(e) = service
-                .update_scan_status(conn, scan_id_clone, ScanStatus::Running)
+                .update_scan_status(scan_id_clone, ScanStatus::Running)
                 .await
             {
                 error!("Failed to update scan status: {}", e);
                 return;
             }
 
-            debug!("Run nmap scan for target: {}", request.target);
-
+            debug!("Run nmap scan for target: {}", target);
+            
             let mut command = AsyncCommand::new("nmap");
-            command.arg("-oX").arg(&output_file).arg(&request.target);
+            command.arg("-oX").arg(&output_file).arg(&target);
 
             match command.output().await {
                 Ok(output) => {
                     if !output.status.success() {
                         let error = String::from_utf8_lossy(&output.stderr).into_owned();
                         let _ = service
-                            .update_scan_status(conn, scan_id_clone, ScanStatus::Failed(error))
+                            .update_scan_status(scan_id_clone, ScanStatus::Failed(error))
                             .await;
                         return;
                     }
 
-                    if let Err(e) = service.process_scan_result(conn, scan_id_clone).await {
+                    if let Err(e) = service.process_scan_result(scan_id_clone).await {
                         let _ = service
                             .update_scan_status(
-                                conn,
                                 scan_id_clone,
                                 ScanStatus::Failed(e.to_string()),
                             )
@@ -245,7 +247,7 @@ impl VulnerabilityScanner for NmapService {
                 },
                 Err(e) => {
                     let _ = service
-                        .update_scan_status(conn, scan_id_clone, ScanStatus::Failed(e.to_string()))
+                        .update_scan_status(scan_id_clone, ScanStatus::Failed(e.to_string()))
                         .await;
                 },
             }

@@ -1,6 +1,7 @@
 extern crate diesel;
 
 use std::env;
+use std::sync::Arc;
 
 use actix_cors::Cors;
 use actix_session::storage::CookieSessionStore;
@@ -29,7 +30,7 @@ use crate::db::schema::users::dsl::*;
 use crate::dtos::db::UserForm;
 use crate::models::user::User;
 use crate::routes::init_routes;
-use crate::services::scanner::ScannerService;
+use crate::services::scanner;
 use crate::utils::config::CONFIG;
 use crate::utils::errors::{AppError, AppErrorJson};
 use crate::utils::hash_password;
@@ -74,7 +75,7 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     let pool = db::establish_connection();
-    let scanner_service = ScannerService::new(&CONFIG);
+    let scanner_service = Arc::new(scanner::ScannerService::new(&CONFIG, pool.clone()));
 
     create_admin_user(&mut pool.get().unwrap()).unwrap();
 

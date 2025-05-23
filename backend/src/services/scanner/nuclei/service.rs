@@ -69,7 +69,7 @@ impl VulnerabilityScanner for NucleiService {
     ) -> Result<String, Error> {
         let task_id = Uuid::new_v4().to_string();
         let output_dir = self.scans_dir.join(&task_id);
-        fs::create_dir_all(&output_dir).map_err(|_| Error::IoError)?;
+        fs::create_dir_all(&output_dir).map_err(|_| Error::IoError("Can't create output directory".to_string()))?;
 
         let output_file = output_dir.join("results.json");
         let new_scan = NewScan {
@@ -77,7 +77,7 @@ impl VulnerabilityScanner for NucleiService {
             scanner_type: "nuclei".to_string(),
             status: "queued".to_string(),
             target: request.target,
-            result_path: Some(output_file.to_str().ok_or(Error::IoError)?.to_string()),
+            result_path: Some(output_file.to_str().ok_or(Error::IoError("Can't unwrap output file".to_string()))?.to_string()),
         };
 
         Scan::create_scan(conn, new_scan).map_err(|e| {
@@ -99,7 +99,7 @@ impl VulnerabilityScanner for NucleiService {
             });
         }
 
-        let content = fs::read_to_string(&output_file).map_err(|_| Error::IoError)?;
+        let content = fs::read_to_string(&output_file).map_err(|_| Error::IoError("Can't read output file".to_string()))?;
 
         let findings: Vec<NucleiFinding> =
             serde_json::from_str(&content).map_err(|e| Error::ParseError(e.to_string()))?;

@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::db::schema::scans;
 use crate::models::project::Project;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable, Associations)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable, Associations, Selectable)]
 #[diesel(belongs_to(Project))]
 #[diesel(table_name = scans)]
 pub struct Scan {
@@ -13,8 +13,8 @@ pub struct Scan {
     pub project_id: Uuid,
     pub scanner_type: String,
     pub status: String,
-    pub target: String,
     pub result_path: Option<String>,
+    pub target: String
 }
 
 #[derive(Debug, Insertable)]
@@ -23,8 +23,8 @@ pub struct NewScan {
     pub project_id: Uuid,
     pub scanner_type: String,
     pub status: String,
-    pub target: String,
     pub result_path: Option<String>,
+    pub target: String
 }
 
 #[derive(Debug, AsChangeset)]
@@ -46,7 +46,7 @@ impl Scan {
 
     pub fn create_scan(conn: &mut PgConnection, scan: NewScan) -> QueryResult<Scan> {
         use crate::db::schema::scans::dsl::*;
-        diesel::insert_into(scans).values(scan).get_result(conn)
+        diesel::insert_into(scans).values(scan).get_result::<Scan>(conn)
     }
 
     pub fn update_scan(
@@ -57,7 +57,7 @@ impl Scan {
         use crate::db::schema::scans::dsl::*;
         diesel::update(scans.find(scan_id))
             .set(scan)
-            .get_result(conn)
+            .get_result::<Scan>(conn)
     }
 
     pub fn delete_scan(conn: &mut PgConnection, scan_id: Uuid) -> QueryResult<usize> {

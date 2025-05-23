@@ -10,7 +10,7 @@ pub trait VulnerabilityScanner {
     type ScanResult;
     async fn create_scan(
         &self,
-        mut conn: &mut PgConnection,
+        conn: &mut PgConnection,
         project_id: Uuid,
         request: Self::ScanRequest,
     ) -> Result<String, Error>;

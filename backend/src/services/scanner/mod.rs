@@ -4,26 +4,26 @@ pub mod traits;
 pub mod types;
 
 use std::sync::Arc;
-
 use tokio::sync::Mutex;
+use crate::db::Pool;
+use crate::utils::config::AppConfig;
+
 pub use traits::VulnerabilityScanner;
 pub use types::ScanStatus;
 
-use crate::utils::config::AppConfig;
-
-#[derive(Clone)]
 pub struct ScannerService {
+    pub nmap: Arc<Mutex<nmap::NmapService>>,
     nuclei: Arc<Mutex<nuclei::NucleiService>>,
-    nmap: Arc<Mutex<nmap::NmapService>>,
 }
 
 impl ScannerService {
-    pub fn new(config: &AppConfig) -> Self {
+    pub fn new(config: &AppConfig, pool: Pool) -> Self {
         Self {
-            nuclei: Arc::new(Mutex::new(nuclei::NucleiService::new(
-                config.scans_path.clone(),
-            ))),
             nmap: Arc::new(Mutex::new(nmap::NmapService::new(
+                config.scans_path.clone(),
+                pool,
+            ))),
+            nuclei: Arc::new(Mutex::new(nuclei::NucleiService::new(
                 config.scans_path.clone(),
             ))),
         }
