@@ -28,6 +28,18 @@ pub struct Service {
     pub description: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct ScanRequest {
+    pub r#type: String,
+    pub target: String
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ScanResponse {
+    pub scan_id: String,
+    pub status: String
+}
+
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Report {
     pub id: Uuid,
@@ -72,6 +84,7 @@ pub struct Team {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Host {
+    pub id: i32,
     pub hostname: Option<String>,
     pub ip_address: String,
 }
@@ -349,6 +362,23 @@ impl ApiClient {
         response.json::<Vec<Host>>()
             .await
             .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
+    pub async fn delete_host(&self, project_id: Uuid, host_id: i32) -> Result<(), String> {
+        let response = Request::delete(&format!("{}/project/{}/host/{}", self.base_url, project_id, host_id))
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if response.status() == 401 {
+            return Err("unauthorized".to_string());
+        }
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        Ok(())
     }
 
     pub async fn get_project_issues(&self, project_id: Uuid) -> Result<Vec<Issue>, String> {
@@ -751,5 +781,27 @@ impl ApiClient {
             data
         })
     }
+
+    pub async fn create_scan(&self, project_id: Uuid, request: &ScanRequest) -> Result<ScanResponse, String> {
+        let response = Request::post(&format!("{}/project/{}/scan", self.base_url, project_id))
+            .json(&request)
+            .unwrap()
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if response.status() == 401 {
+            return Err("unauthorized".to_string())
+        }
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        response.json::<ScanResponse>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
+    }
+
 }
 

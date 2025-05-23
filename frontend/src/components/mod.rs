@@ -19,3 +19,5 @@ pub mod issue_sidebar;
 pub mod add_host_modal;
 pub mod report_form;
 pub mod admin_report_templates;
+pub mod scan_modal;
+pub mod confirm_delete_modal;

@@ -35,6 +35,7 @@ pub fn add_host_modal(props: &AddHostModalProps) -> Html {
         })
     };
 
+
     let on_submit = {
         let hostname = hostname.clone();
         let ip = ip.clone();
@@ -101,7 +102,6 @@ pub fn add_host_modal(props: &AddHostModalProps) -> Html {
                             class="form-control"
                             value={(*hostname).clone()}
                             onchange={on_hostname_change}
-                            required=true
                         />
                     </div>
                     
