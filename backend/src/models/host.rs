@@ -21,13 +21,14 @@ pub struct Host {
 #[derive(Insertable, Deserialize, AsChangeset, Debug)]
 #[diesel(table_name = hosts)]
 pub struct NewHost {
-    hostname: Option<String>,
-    ip_address: String,
-    project_id: Uuid,
+    pub(crate) hostname: Option<String>,
+    pub(crate) ip_address: String,
+    pub(crate) project_id: Uuid,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct HostResponse {
+    pub id: i32,
     pub hostname: Option<String>,
     pub ip_address: String,
 }
@@ -52,13 +53,14 @@ impl Host {
 
         // Получаем хосты для проекта
         let selected_hosts = Host::belonging_to(&project)
-            .select((hostname, ip_address))
-            .load::<(Option<String>, String)>(conn)?;
+            .select((id, hostname, ip_address))
+            .load::<(i32, Option<String>, String)>(conn)?;
 
         // Преобразуем результаты в HostResponse
         let mut result = Vec::with_capacity(selected_hosts.len());
-        for (host, ip) in selected_hosts {
+        for (host_id, host, ip) in selected_hosts {
             result.push(HostResponse {
+                id: host_id,
                 hostname: host,
                 ip_address: ip,
             });
@@ -112,5 +114,24 @@ impl Host {
         diesel::update(hosts.filter(id.eq(host_id)))
             .set(&new_host)
             .execute(conn)
+    }
+
+    pub fn create_hosts(
+        conn: &mut PgConnection,
+        forms: Vec<HostForm>,
+        id_project: Uuid,
+    ) -> QueryResult<Vec<Host>> {
+        use crate::db::schema::hosts::dsl::*;
+        let mut new_hosts_vec: Vec<NewHost> = Vec::new();
+        for form in forms {
+            new_hosts_vec.push(NewHost {
+                hostname: form.hostname,
+                ip_address: form.ip_address,
+                project_id: id_project,
+            });
+        }
+        diesel::insert_into(hosts)
+            .values(new_hosts_vec)
+            .get_results::<Host>(conn)
     }
 }

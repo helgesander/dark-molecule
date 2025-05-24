@@ -1,12 +1,9 @@
-use actix_web::middleware::from_fn;
 use actix_web::web;
-use actix_web::web::service;
 
 use crate::handlers::{
     admin_handlers, auth_handlers, project_handlers, team_handlers, template_handlers,
     user_handlers,
 };
-use crate::middleware::auth::auth_middleware;
 
 // TODO: add auth wrappers for all routes
 fn init_project_routes(cfg: &mut web::ServiceConfig) {
@@ -23,6 +20,7 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
             .service(project_handlers::update_issue_handler)
             .service(project_handlers::create_host_handler)
             .service(project_handlers::update_host_handler)
+            .service(project_handlers::delete_host_handler)
             .service(project_handlers::create_issue_handler)
             .service(project_handlers::get_issue_handler)
             .service(project_handlers::create_report_handler)

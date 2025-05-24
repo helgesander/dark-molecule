@@ -5,9 +5,8 @@ use uuid::Uuid;
 
 use crate::db::schema::{issues, projects, *};
 use crate::dtos::handlers::{CreateIssueForm, IssueForm};
-use crate::models::host::{Host, HostResponse};
+use crate::models::host::HostResponse;
 use crate::models::project::Project;
-use crate::models::proof_of_concept::ProofOfConcept;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Associations, PartialEq, Debug)]
 #[diesel(table_name = issues)]
@@ -25,7 +24,7 @@ pub struct Issue {
 
 #[derive(Insertable, Deserialize, AsChangeset, Debug)]
 #[diesel(table_name = issues)]
-struct NewIssue {
+pub struct NewIssue {
     name: String,
     description: Option<String>,
     mitigation: Option<String>,
@@ -78,6 +77,28 @@ impl Issue {
         diesel::insert_into(issues::table)
             .values(new_issue)
             .get_result::<Issue>(conn)
+    }
+
+    pub fn create_issues(
+        conn: &mut PgConnection,
+        forms: Vec<IssueForm>,
+        id_project: Uuid,
+    ) -> QueryResult<Vec<Issue>> {
+        debug!("Create issues with data {:?}", forms);
+        let mut new_issues: Vec<NewIssue> = Vec::new();
+        for form in forms {
+            new_issues.push(NewIssue {
+                name: form.name.clone(),
+                description: form.description,
+                mitigation: form.mitigation,
+                cvss: form.cvss.unwrap_or(0.0),
+                project_id: id_project,
+            });
+        }
+
+        diesel::insert_into(issues::table)
+        .values(new_issues)
+            .get_results::<Issue>(conn)
     }
 
     pub fn update_issue(
@@ -186,10 +207,11 @@ impl Issue {
         // Затем получаем информацию о хостах
         let related_hosts = hosts
             .filter(id.eq_any(host_ids))
-            .select((hostname, ip_address))
-            .load::<(Option<String>, String)>(conn)?
+            .select((id, hostname, ip_address))
+            .load::<(i32, Option<String>, String)>(conn)?
             .into_iter()
-            .map(|(host, ip)| HostResponse {
+            .map(|(h_id, host, ip)| HostResponse {
+                id: h_id,
                 hostname: host,
                 ip_address: ip,
             })

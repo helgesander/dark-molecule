@@ -31,6 +31,7 @@ pub struct NewScan {
 #[diesel(table_name = scans)]
 pub struct UpdateScan {
     pub status: String,
+    pub result_path: Option<String>,
 }
 
 impl Scan {

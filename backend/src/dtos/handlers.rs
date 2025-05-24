@@ -16,7 +16,7 @@ pub struct UserData {
     pub is_admin: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct IssueForm {
     pub name: String,
     pub description: Option<String>,
@@ -49,7 +49,7 @@ pub struct ProjectForm {
     pub team_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct HostForm {
     pub hostname: Option<String>,
     pub ip_address: String,

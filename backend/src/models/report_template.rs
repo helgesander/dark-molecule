@@ -6,9 +6,8 @@ use log::error;
 use serde::Serialize;
 
 use crate::db::schema::report_templates;
-use crate::dtos::handlers::{ReportTemplateForm, UploadReportTemplateForm};
+use crate::dtos::handlers::ReportTemplateForm;
 use crate::utils::config::CONFIG;
-use crate::utils::errors::AppError;
 
 #[derive(Queryable, Selectable, Identifiable, Serialize)]
 #[diesel(table_name = report_templates)]

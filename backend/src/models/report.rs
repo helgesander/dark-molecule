@@ -1,6 +1,5 @@
 use std::fs;
 
-use chrono::Utc;
 use diesel::prelude::*;
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
@@ -11,7 +10,6 @@ use crate::db::schema::projects;
 use crate::db::schema::reports::dsl::*;
 use crate::models::project::Project;
 use crate::models::report_template::ReportTemplate;
-use crate::utils::config::CONFIG;
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Associations, PartialEq, Debug)]
 #[diesel(table_name = schema::reports)]

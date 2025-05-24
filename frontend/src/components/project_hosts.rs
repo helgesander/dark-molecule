@@ -4,6 +4,8 @@ use uuid::Uuid;
 use crate::components::add_host_modal::AddHostModal;
 use crate::components::scan_modal::ScanModal;
 use crate::components::confirm_delete_modal::ConfirmDeleteModal;
+use crate::debug_log;
+use web_sys::MouseEvent;
 
 #[derive(Properties, PartialEq)]
 pub struct ProjectHostsProps {
@@ -42,6 +44,13 @@ pub fn project_hosts(props: &ProjectHostsProps) -> Html {
             selected_host.set(None);
             show_edit_host_modal.set(true);
             edit_host_header.set("Добавление хоста".to_string());
+        })
+    };
+
+    let on_scan_host_click = {
+        let show_scan_modal = show_scan_modal.clone();
+        Callback::from(move |_: MouseEvent| {
+            show_scan_modal.set(true);
         })
     };
 
@@ -100,6 +109,13 @@ pub fn project_hosts(props: &ProjectHostsProps) -> Html {
         })
     };
 
+    let on_scan_modal_close = {
+        let show_scan_modal = show_scan_modal.clone();
+        Callback::from(move |_: ()| {
+            show_scan_modal.set(false);
+        })
+    };
+
     html! {
         <div class="hosts-section">
             <div class="hosts-header">
@@ -109,7 +125,7 @@ pub fn project_hosts(props: &ProjectHostsProps) -> Html {
                         <img src="/static/icons/plus.svg" class="icon" alt="Добавить" />
                         {"Добавить"}
                     </button>
-                    <button class="btn btn-primary">
+                    <button class="btn btn-primary" onclick={on_scan_host_click.clone()}>
                         <img src="/static/icons/plus.svg" class="icon" alt="Добавить с помощью сканера" />
                         {"Добавить с помощью сканера"}
                     </button>
@@ -123,7 +139,7 @@ pub fn project_hosts(props: &ProjectHostsProps) -> Html {
                     let host_for_delete = host.clone();
                     let host_for_display = host.clone();
                     html! {
-                        <div class="host-card" onclick={Callback::from(move |_| on_click.emit(host_for_click.clone()))}>
+                        <div class="host-card">
                             <div class="host-content">
                                 <h3>{host_for_display.hostname.as_deref().unwrap_or("Без имени")}</h3>
                                 <div class="host-details">
@@ -131,7 +147,18 @@ pub fn project_hosts(props: &ProjectHostsProps) -> Html {
                                 </div>
                             </div>
                             <div class="host-actions">
-                                <button class="btn btn-icon" onclick={Callback::from(move |_| {
+                                <button class="btn btn-icon" onclick={Callback::from(move |e: MouseEvent| {
+                                    e.prevent_default();
+                                    e.stop_propagation();
+                                    debug_log!("Edit button clicked for host: {:?}", host_for_click);
+                                    on_click.emit(host_for_click.clone());
+                                })}>
+                                    <img src="/static/icons/edit.svg" class="icon" alt="Редактировать" />
+                                </button>
+                                <button class="btn btn-icon" onclick={Callback::from(move |e: MouseEvent| {
+                                    e.prevent_default();
+                                    e.stop_propagation();
+                                    debug_log!("Delete button clicked for host: {:?}", host_for_delete);
                                     on_delete.emit(host_for_delete.clone());
                                 })}>
                                     <img src="/static/icons/trash.svg" class="icon" alt="Удалить" />
@@ -153,7 +180,7 @@ pub fn project_hosts(props: &ProjectHostsProps) -> Html {
             if *show_scan_modal {
                 <ScanModal
                     project_id={props.project_id}
-                    on_close={on_modal_close.clone()}
+                    on_close={on_scan_modal_close.clone()}
                     scan_type={"nmap".to_string()}
                 />
             }

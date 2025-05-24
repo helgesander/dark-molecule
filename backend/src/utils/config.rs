@@ -2,7 +2,6 @@ use std::sync::Arc;
 use std::{env, fs};
 
 use actix_web::cookie::Key;
-use dotenv::dotenv;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 

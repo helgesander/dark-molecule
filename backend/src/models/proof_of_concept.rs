@@ -1,13 +1,10 @@
-use diesel::associations::HasTable;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::db::schema;
-use crate::db::schema::proof_of_concepts;
 use crate::dtos::handlers::ProofOfConceptForm;
 use crate::models::issue::Issue;
-use crate::models::project::Project;
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone, Associations)]
 #[diesel(table_name = schema::proof_of_concepts)]

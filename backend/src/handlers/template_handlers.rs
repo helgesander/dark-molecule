@@ -1,7 +1,5 @@
 use std::io::Read;
 
-use actix_multipart::form::tempfile::TempFile;
-use actix_multipart::form::text::Text;
 use actix_multipart::form::MultipartForm;
 use actix_web::{get, post, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};

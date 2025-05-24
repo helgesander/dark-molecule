@@ -6,6 +6,8 @@ use yew_router::prelude::use_navigator;
 use crate::components::issues_list::IssuesList;
 use crate::components::issue_create_form::IssueCreateForm;
 use wasm_bindgen_futures;
+use crate::components::scan_modal::ScanModal;
+use web_sys::MouseEvent;
 use crate::debug_log;
 
 #[derive(Properties, PartialEq)]
@@ -20,6 +22,7 @@ pub fn project_issues(props: &ProjectIssuesProps) -> Html {
     let issues = use_state(|| props.issues.clone());
     let navigator = use_navigator().unwrap();
     let show_create_form = use_state(|| false);
+    let show_scan_modal = use_state(|| false);
 
     let on_create_issue = {
         let issues = issues.clone();
@@ -27,6 +30,20 @@ pub fn project_issues(props: &ProjectIssuesProps) -> Html {
         let show_create_form = show_create_form.clone();
         Callback::from(move |_| {
             show_create_form.set(true);
+        })
+    };
+
+    let on_scan_hosts_click = {
+        let show_scan_modal = show_scan_modal.clone();
+        Callback::from(move |_: MouseEvent| {
+            show_scan_modal.set(true);
+        })
+    };
+
+    let on_scan_modal_close = {
+        let show_scan_modal = show_scan_modal.clone();
+        Callback::from(move |_: ()| {
+            show_scan_modal.set(false);
         })
     };
 
@@ -71,14 +88,6 @@ pub fn project_issues(props: &ProjectIssuesProps) -> Html {
         })
     };
 
-    // let on_name_change = {
-    //     let new_issue_name = new_issue_name.clone();
-    //     Callback::from(move |e: InputEvent| {
-    //         if let Some(input) = e.target_dyn_into::<web_sys::HtmlInputElement>() {
-    //             new_issue_name.set(input.value());
-    //         }
-    //     })
-    // };
 
     html! {
         <div class="issues-section">
@@ -94,15 +103,22 @@ pub fn project_issues(props: &ProjectIssuesProps) -> Html {
                             <img src="/static/icons/plus.svg" class="icon" alt="Создать" />
                             {"Добавить"}
                         </button>
-                        <button class="btn btn-primary">
+                        <button class="btn btn-primary" onclick={on_scan_hosts_click.clone()}>
                             <img src="/static/icons/plus.svg" class="icon" alt="Создать" />
-                            {"Создать с помощью"}
+                            {"Создать с помощью сканера"}
                         </button>
                         </>
                     }
                 }}
             </div>
             <IssuesList issues={(*issues).clone()} on_create_click={on_create_issue} on_issue_click={on_issue_click} />
+            if *show_scan_modal {
+                <ScanModal
+                    project_id={props.project_id}
+                    on_close={on_scan_modal_close.clone()}
+                    scan_type={"nuclei".to_string()}
+                />
+            }
         </div>
     }
 }

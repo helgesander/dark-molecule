@@ -291,28 +291,35 @@ body {
     }
 
     .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        margin-bottom: 1.5rem;
+
         label {
+            display: block;
+            margin-bottom: 0.5rem;
             color: $text-color;
-            font-size: 1rem;
             font-weight: 500;
         }
-        input {
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            background: #f7fafd;
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid $border-color;
+            border-radius: 4px;
+            background-color: #ffffff;
             color: $text-color;
-            font-size: 1.1rem;
-            font-family: 'Fira Mono', monospace;
-            transition: border-color 0.2s, background 0.2s;
+            font-size: 1rem;
+
             &:focus {
-                border-color: $primary-color;
-                background: #f3eaff;
                 outline: none;
+                border-color: $primary-color;
             }
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
         }
     }
 
@@ -606,27 +613,26 @@ footer {
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            margin-bottom: 1.5rem;
+
             label {
+                display: block;
+                margin-bottom: 0.5rem;
                 color: $text-color;
-                font-size: 1rem;
                 font-weight: 500;
             }
+
             input, select {
-                padding: 12px;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                background: #f7fafd;
+                padding: 0.75rem;
+                border: 1px solid $border-color;
+                border-radius: 4px;
+                background-color: #ffffff;
                 color: $text-color;
-                font-size: 1.1rem;
-                font-family: 'Fira Mono', monospace;
-                transition: border-color 0.2s, background 0.2s;
+                font-size: 1rem;
+
                 &:focus {
-                    border-color: $primary-color;
-                    background: #f3eaff;
                     outline: none;
+                    border-color: $primary-color;
                 }
             }
         }
@@ -1254,23 +1260,30 @@ footer {
 }
 
 .form-group {
-    margin-bottom: 1rem;
-    // padding: 20px;
+    margin-bottom: 1.5rem;
 
     label {
         display: block;
         margin-bottom: 0.5rem;
-        color: #333;
+        color: $text-color;
         font-weight: 500;
     }
 
     input,
+    select,
     textarea {
         width: 100%;
         padding: 0.75rem;
-        border: 1px solid #ddd;
+        border: 1px solid $border-color;
         border-radius: 4px;
+        background-color: #ffffff;
+        color: $text-color;
         font-size: 1rem;
+
+        &:focus {
+            outline: none;
+            border-color: $primary-color;
+        }
     }
 
     textarea {
@@ -2129,7 +2142,7 @@ input[type="submit"] {
         padding: 0.75rem;
         border: 1px solid $border-color;
         border-radius: 4px;
-        background-color: $input-background;
+        // background-color: $input-background;
         color: $text-color;
 
         &:focus {

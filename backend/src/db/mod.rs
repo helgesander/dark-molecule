@@ -2,11 +2,10 @@ pub mod schema;
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::{self, ConnectionManager};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use diesel::Connection;
 use std::env;
 
-use crate::utils::config::CONFIG;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 

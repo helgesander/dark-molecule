@@ -1,12 +1,10 @@
 extern crate diesel;
 
-use std::env;
 use std::sync::Arc;
 
 use actix_cors::Cors;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
-use actix_web::cookie::Key;
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpResponse, HttpServer};

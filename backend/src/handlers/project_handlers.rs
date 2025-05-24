@@ -1,19 +1,17 @@
 use std::io::Read;
+use std::sync::Arc;
 
 use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::text::Text;
 use actix_multipart::form::MultipartForm;
-use actix_multipart::Multipart;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
-use futures::{StreamExt, TryStreamExt};
-use log::error;
+use futures::TryStreamExt;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
-use utoipa::openapi::security::Http;
 use uuid::Uuid;
-
-use crate::db::schema::teams::description;
+use crate::db::schema::hosts;
 use crate::dtos::handlers::{
     CreateIssueForm, HostForm, IssueForm, ProjectForm, ProofOfConceptForm, ReportForm,
 };
@@ -23,13 +21,11 @@ use crate::models::project::Project;
 use crate::models::proof_of_concept::ProofOfConcept;
 use crate::models::report::Report;
 use crate::models::report_template::ReportTemplate;
-use crate::models::scan::Scan;
+use crate::models::scan::{NewScan, Scan, UpdateScan};
 use crate::services;
 use crate::services::report::{MarkdownService, ReportGenerator};
-use crate::services::scanner::nmap::service::NmapScanRequest;
-use crate::services::scanner::nuclei::NucleiScanRequest;
-use crate::services::scanner::{ScannerService, VulnerabilityScanner};
-use crate::utils::errors::{AppError, AppErrorJson};
+use crate::services::scanner::{Scanner, ScannerService, VulnerabilityScanner};
+use crate::utils::errors::AppError;
 
 #[get("/")]
 pub async fn get_projects_handler(
@@ -322,6 +318,35 @@ pub async fn update_host_handler(
     }
 }
 
+#[delete("/{project_id}/host/{host_id}")]
+pub async fn delete_host_handler(
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    path: web::Path<(String, i32)>,
+) -> Result<HttpResponse, AppError> {
+    let (_, host_id) = path.into_inner();
+
+    let deleted_host = web::block(move || {
+        let mut conn = pool.get().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::DatabaseError
+        })?;
+
+        debug!("In delete host handler");
+
+        Host::delete_host(&mut conn, host_id).map_err(|e| {
+            error!("Failed to delete host by project id: {}", e);
+            AppError::DatabaseError
+        })
+    })
+        .await??;
+
+    match deleted_host {
+        1 => Ok(HttpResponse::Ok().finish()),
+        0 => Err(AppError::NotFound),
+        _ => Err(AppError::InternalServerError),
+    }
+}
+
 #[derive(Debug, MultipartForm)]
 struct UploadPocForm {
     #[multipart(limit = "10MB")]
@@ -487,7 +512,7 @@ pub async fn create_report_handler(
                 AppError::NotFound
             })?;
 
-        let mut report = service
+        let report = service
             .generate(&project_data, &template_data)
             .map_err(|e| {
                 error!("Failed to generate report: {}", e);
@@ -554,78 +579,101 @@ pub struct ScanRequest {
 
 #[derive(Debug, Serialize)]
 pub struct ScanResponse {
-    pub task_id: String,
+    pub scan_id: Uuid,
     pub status: String,
 }
 
 #[post("/{project_id}/scan")]
 pub async fn start_scan_handler(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    scanner_service: web::Data<ScannerService>,
+    scanner_service: web::Data<Arc<ScannerService>>,
     path: web::Path<String>,
-    request: web::Json<ScanRequest>,
+    data: web::Json<ScanRequest>,
 ) -> Result<HttpResponse, AppError> {
-    let project_id = path.into_inner();
-    let project_id = Uuid::parse_str(&project_id).map_err(|_| AppError::BadRequest)?;
-        let mut conn = pool.get().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::DatabaseError
-        })?;
-        match request.r#type.as_str() {
-            "nuclei" => {
-                let nuclei = scanner_service.get_nuclei().await;
-                let mut scanner = nuclei.lock().await;
-                let req = NucleiScanRequest {
-                    target: request.target.clone(),
-                    templates: None,
-                    severity: None,
-                    output_format: None,
-                };
-                match scanner.create_scan(&mut conn, project_id, req).await {
-                    Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
-                        task_id,
-                        status: "queued".to_string(),
-                    })),
-                    Err(e) => Err(AppError::InternalServerError),
+    // 1. Подготовка данных
+    let project_id = Uuid::parse_str(&path.into_inner()).map_err(|_| AppError::BadRequest)?;
+    let scan_request = data.into_inner();
+
+    // 2. Сохранение в БД
+    let mut conn = pool.get().map_err(|e| {
+        error!("DB connection error: {}", e);
+        AppError::DatabaseError
+    })?;
+
+    let scan_record = Scan::create_scan(&mut conn, NewScan {
+        project_id,
+        scanner_type: scan_request.r#type.clone(),
+        status: "queued".to_string(),
+        target: scan_request.target.clone(),
+        result_path: None,
+    })?;
+
+    // 3. Запуск в фоне
+    let service = scanner_service.clone();
+    let pool = pool.clone();
+    let target = scan_request.target.clone();
+    let scanner_type = scan_request.r#type.clone();
+
+    tokio::spawn(async move {
+        // Получаем новое соединение для фоновой задачи
+        let mut conn = match pool.get() {
+            Ok(conn) => conn,
+            Err(e) => {
+                error!("Background task failed to get DB connection: {}", e);
+                return;
+            }
+        };
+
+        // Выбираем сканер
+        let scanner = match scanner_type.as_str() {
+            "nmap" => Scanner::Nmap(service.get_nmap().await),
+            "nuclei" => Scanner::Nuclei(service.get_nuclei().await),
+            _ => {
+                error!("Unknown scanner type");
+                return;
+            }
+        };
+
+        // Выполняем сканирование и сохраняем результат
+        match scanner.start_scan(scan_record.id, &target).await {
+            Ok(scan_result) => {
+                if let Err(e) = scan_result.save_data(project_id, &mut conn) {
+                    error!("Failed to save scan data: {}", e);
                 }
             },
-            "nmap" => {
-                let nmap = scanner_service.get_nmap().await;
-                let mut scanner = nmap.lock().await;
-                let req = NmapScanRequest {
-                    target: request.target.clone(),
-                };
-                match scanner.create_scan(&mut conn, project_id, req).await {
-                    Ok(task_id) => Ok(HttpResponse::Ok().json(ScanResponse {
-                        task_id,
-                        status: "queued".to_string(),
-                    })),
-                    Err(e) => Err(AppError::InternalServerError),
-                }
-            },
-            _ => Err(AppError::BadRequest),
+            Err(e) => {
+                error!("Scan failed: {}", e);
+                // Можно обновить статус в БД как failed
+            }
         }
+    });
+
+    // 4. Ответ
+    Ok(HttpResponse::Accepted().json(ScanResponse {
+        scan_id: scan_record.id,
+        status: "started".to_string(),
+    }))
 }
 
-#[get("/{project_id}/scan/{scanner_type}/{task_id}")]
+#[get("/{project_id}/scan/{scanner_type}/{scan_id}")]
 pub async fn get_scan_result_handler(
     scanner_service: web::Data<ScannerService>,
     path: web::Path<(String, String)>,
 ) -> Result<HttpResponse, AppError> {
-    let (scanner_type, task_id) = path.into_inner();
+    let (scanner_type, scan_id) = path.into_inner();
     match scanner_type.as_str() {
         "nuclei" => {
             let nuclei = scanner_service.get_nuclei().await;
-            let mut scanner = nuclei.lock().await;
-            match scanner.get_scan_result(&task_id).await {
+            let scanner = nuclei.lock().await;
+            match scanner.get_scan_result(&scan_id).await {
                 Ok(result) => Ok(HttpResponse::Ok().json(result)),
                 Err(e) => Err(AppError::InternalServerError),
             }
         },
         "nmap" => {
             let nmap = scanner_service.get_nmap().await;
-            let mut scanner = nmap.lock().await;
-            match scanner.get_scan_result(&task_id).await {
+            let scanner = nmap.lock().await;
+            match scanner.get_scan_result(&scan_id).await {
                 Ok(result) => Ok(HttpResponse::Ok().json(result)),
                 Err(e) => Err(AppError::InternalServerError),
             }
@@ -640,14 +688,14 @@ pub async fn get_scan_all_handler(
     path: web::Path<String>,
 ) -> Result<HttpResponse, AppError> {
     let id = path.into_inner();
-    let project_id = Uuid::parse_str(id.as_str()).map_err(|_| AppError::BadRequest)?;
+    let p_id = Uuid::parse_str(id.as_str()).map_err(|_| AppError::BadRequest)?;
 
     let scans = web::block(move || {
         let mut conn = pool.get().map_err(|e| {
             error!("Failed to get database connection: {}", e);
             AppError::DatabaseError
         })?;
-        Scan::find_by_project(&mut conn, project_id).map_err(|e| {
+        Scan::find_by_project(&mut conn, p_id).map_err(|e| {
             error!("Failed to get scans by project id: {}", e);
             AppError::DatabaseError
         })

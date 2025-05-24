@@ -1,10 +1,10 @@
 use std::fs;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use chrono::{NaiveDate, Utc};
 use diesel::PgConnection;
-use handlebars::{Handlebars, Template};
+use handlebars::Handlebars;
 use log::{debug, error};
 use uuid::Uuid;
 
