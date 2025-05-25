@@ -1,0 +1,23 @@
+tab_spaces = 4
+hard_tabs = false
+max_width = 100
+
+wrap_comments = true
+chain_width = 60
+
+group_imports = "StdExternalCrate"
+reorder_imports = true
+imports_granularity = "Module"
+
+match_arm_blocks = true
+match_block_trailing_comma = true
+
+format_macro_matchers = true
+wrap_macro_args = true
+
+format_code_in_doc_comments = true
+format_attribute_cfg = true
+format_unsafe_block = true
+
+unstable_features = true
+remove_unused_imports = true

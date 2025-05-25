@@ -1,0 +1,59 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: dark-molecule-backend
+    ports: 
+      - "${BACKEND_PORT}:8080"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SERVER_PORT: ${BACKEND_PORT}
+    depends_on:
+      - db
+      - frontend
+    volumes:
+      - ./templates:/app/templates
+      # TODO: mount template folder 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "${FRONTEND_PORT}:8080"
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+  db:
+    image: postgres:17.2
+    restart: unless-stopped
+    container_name: dark-molecule-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5442:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data/pgdata
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    tty: true
+
+
+networks:
+  dark-molecule-network:
+
+volumes:
+  pgdata:
+    driver: local
