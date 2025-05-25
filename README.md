@@ -1,4 +1,5 @@
 # Dark Molecule | Framework for Penetration Testers
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/helgesander/dark-molecule)
 
 ## Deploy
 
