@@ -168,7 +168,7 @@
         <h3>Найденные уязвимости</h3>
         {{#each project.issues}}
         <div class="card {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
-            <h4>{{this.title}}</h4>
+            <h4>{{this.name}}</h4>
             <p>
                 <strong>Уровень риска:</strong>
                 <span class="tag {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
@@ -209,50 +209,10 @@
         </div>
     </div>
 
-    <div class="section">
-        <h2 class="section-title">Рекомендации по безопасности</h2>
-        {{#each project.issues}}
-        <div class="card">
-            <h3>{{this.title}}</h3>
-            <p>{{this.mitigation}}</p>
-        </div>
-        {{/each}}
-    </div>
-
-    <div class="section">
-        <h2 class="section-title">Приложения</h2>
-
-        <h3>A. Детали хостов</h3>
-        {{#each project.hosts}}
-        <div class="card">
-            <h4>{{this.hostname}}</h4>
-            <p><strong>IP:</strong> {{this.ip_address}}</p>
-            {{#if this.os}}<p><strong>OS:</strong> {{this.os}}</p>{{/if}}
-            {{#if this.status}}<p><strong>Статус:</strong> {{this.status}}</p>{{/if}}
-            {{#if this.open_ports}}<p><strong>Порты:</strong> {{this.open_ports}}</p>{{/if}}
-        </div>
-        {{/each}}
-
-        <h3>B. Детали уязвимостей</h3>
-        {{#each project.issues}}
-        <div class="card {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
-            <h4>{{this.title}}</h4>
-            <p>
-                <strong>Уровень риска:</strong>
-                <span class="tag {{#if (gte this.cvss 9.0)}}critical{{else if (gte this.cvss 7.0)}}high{{else if (gte this.cvss 4.0)}}medium{{else}}low{{/if}}">
-                    {{severityFromCvss this.cvss}}
-                </span>
-                <span class="cvss-score">CVSS: {{this.cvss}}</span>
-            </p>
-            <p><strong>Описание:</strong> {{this.description}}</p>
-            <p><strong>Рекомендации:</strong> {{this.mitigation}}</p>
-        </div>
-        {{/each}}
-    </div>
 
     <div class="footer">
         <p>Отчет сгенерирован автоматически системой Dark Molecule</p>
-        <p>Дата генерации: {{formatDate now}}</p>
+        <p>Дата генерации: {{ currentDate }}</p>
     </div>
 </body>
 </html>

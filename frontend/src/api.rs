@@ -325,7 +325,6 @@ impl ApiClient {
     pub async fn get_project(&self, id: Uuid) -> Result<Project, String> {
         let response = Request::get(&format!("{}/project/{}", self.base_url, id))
             .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
             .send()
             .await
             .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;

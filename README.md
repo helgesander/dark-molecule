@@ -2,11 +2,7 @@
 
 ## Deploy
 
-### via Docker
-
-```shell
-docker compose up --build
-```
+### via Docker (NOT READY YET)
 
 ### without Docker (hard way)
 
@@ -21,27 +17,22 @@ cargo run --release
 
 At the first launch, an administrator account will be generated and displayed in the logs of backend.
 
-For frontend:
-TODO
+For frontend (in directory with frontend folder):
+```shell
+rustup target add wasm32-unknown-unknown
+cargo install --locked trunk
+trunk serve --release
+```
+
+## Configuration
+
+For backend in backend/.env
 
 ## Configuration (for Docker Deploy way)
 
-All settings presented in .env.example:
-
-```dotenv
-POSTGRES_USER: postgres
-POSTGRES_PASSWORD: postgres
-POSTGRES_DB: dark-molecule-db
-POSTGRES_PORT: 5432
-BACKEND_PORT: 8080
-FRONTEND_PORT: 80
-TEMPLATES_PATH: ./templates
-
-```
-
 
 ## TODO
-- [ ] Modules with some usefull tools (wrote on lua)
+- [ ] Modules with some useful tools (wrote on lua)
 - [x] Create users
 - [x] Create projects
 - [x] Frontend for all
@@ -51,8 +42,8 @@ TEMPLATES_PATH: ./templates
 - [ ] Сделать так, чтобы при возвращении Bad Request возвращалась причина
 - [x] Добавить функцию валидации, что юзернейм, почта уникальны
 - [x] Добавить инициализацию бд в код бекенда
-- [ ] Модуль сканировать nmap для заполнения списка хостов (САМОЕ ГЛАВНОЕ)
-- [ ] Модуль сканирования nuclei, а также преобразования результатов в готовые issues (САМОЕ ГЛАВНОЕ)
+- [x] Модуль сканировать nmap для заполнения списка хостов (САМОЕ ГЛАВНОЕ)
+- [x] Модуль сканирования nuclei, а также преобразования результатов в готовые issues (САМОЕ ГЛАВНОЕ)
 - [ ] Модуль сканирования gowitness, если нас интересует только веб
 - [ ] Модуль сканирования Shodan для нахождения каких-то точек входа еще
 - [ ] Модуль фаззинга ffufai для сканирования поддиректорий в вебе (ОЧЕНЬ ОПЦИОНАЛЬНО)
