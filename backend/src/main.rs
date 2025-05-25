@@ -65,7 +65,6 @@ fn create_admin_user(conn: &mut PgConnection) -> Result<(), AppError> {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
-    // Настраиваем более подробное логирование
     env_logger::Builder::from_env(Env::default().default_filter_or("debug"))
         .format_timestamp_millis()
         .format_module_path(false)

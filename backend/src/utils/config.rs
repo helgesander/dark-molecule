@@ -49,7 +49,7 @@ impl AppConfig {
                 max_connections: env::var("DATABASE_MAX_CONNECTIONS")
                     .ok()
                     .and_then(|v| v.parse().ok())
-                    .unwrap_or(5),
+                    .unwrap_or(5), // TODO: change
             },
             server: ServerConfig {
                 host: env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),

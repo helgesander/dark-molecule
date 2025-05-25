@@ -2,7 +2,7 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
-use chrono::{NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use diesel::PgConnection;
 use handlebars::Handlebars;
 use log::{debug, error};
@@ -19,6 +19,20 @@ pub struct MarkdownService;
 
 impl MarkdownService {
     fn register_helpers(handlebars: &mut Handlebars) {
+        handlebars.register_helper(
+            "currentDate",
+            Box::new(
+                |_: &handlebars::Helper,
+                 _: &Handlebars,
+                 _: &handlebars::Context,
+                 _: &mut handlebars::RenderContext,
+                 out: &mut dyn handlebars::Output| -> handlebars::HelperResult {
+                    let now: DateTime<Utc> = Utc::now();
+                    out.write(&now.format("%d.%m.%Y").to_string())?;
+                    Ok(())
+                },
+            ),
+        );
         handlebars.register_helper(
             "formatDate",
             Box::new(
@@ -49,13 +63,11 @@ impl MarkdownService {
                  _: &handlebars::Context,
                  _: &mut handlebars::RenderContext,
                  out: &mut dyn handlebars::Output| {
-                    // Получаем параметр CVSS score
                     let cvss_score =
                         h.param(0).and_then(|v| v.value().as_f64()).ok_or_else(|| {
                             handlebars::RenderError::new("CVSS score must be a number")
                         })?;
 
-                    // Определяем severity по стандартной классификации CVSS
                     let severity = if cvss_score >= 9.0 {
                         "Critical"
                     } else if cvss_score >= 7.0 {
@@ -154,9 +166,8 @@ impl ReportGenerator for MarkdownService {
             "now": Utc::now()
         });
 
-        let filename = format!("report_{}.md", Utc::now().format("%Y%m%d_%H%M%S"));
+        let filename = format!("report_{}.{}", Utc::now().format("%Y%m%d_%H%M%S"), report_template.extension.clone());
 
-        // Рендерим отчет
         let rendered = handlebars
             .render("report", &data)
             .map_err(|e| Error::TemplateError(format!("Failed to render template: {}", e)))?;
@@ -164,7 +175,7 @@ impl ReportGenerator for MarkdownService {
         let report = Report {
             filename,
             content: rendered.into_bytes(),
-            format: "markdown".to_string(),
+            format: self.get_format_by_extension(report_template.extension.clone()),
             generated_at: Utc::now(),
         };
 
