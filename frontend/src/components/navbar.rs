@@ -53,11 +53,11 @@ pub fn navbar(props: &NavbarProps) -> Html {
             if !user.is_all_none() {
                 <div class="navbar-menu">
                     <ul>
-                        <li>
-                            <Link<MainRoute> to={MainRoute::MainPage} classes="nav-link">
-                                <span>{"Главная"}</span>
-                            </Link<MainRoute>>
-                        </li>
+                        // <li>
+                        //     <Link<MainRoute> to={MainRoute::MainPage} classes="nav-link">
+                        //         <span>{"Главная"}</span>
+                        //     </Link<MainRoute>>
+                        // </li>
                         <li>
                             <Link<MainRoute> to={MainRoute::Projects} classes="nav-link">
                                 <span>{"Проекты"}</span>

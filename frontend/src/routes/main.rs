@@ -48,7 +48,7 @@ pub fn switch_main(route: MainRoute) -> Html {
         MainRoute::Register => html! {<RegisterPage />},
         MainRoute::Admin | MainRoute::AdminRoot => html! { <AdminPage /> },
         MainRoute::Profile => html! {<ProfilePage />},
-        MainRoute::MainPage => html! {<MainPage />},
+        MainRoute::MainPage => html! {<LoginPage />},
         MainRoute::NotFound => html! {<NotFoundPage />}
     }
 }
