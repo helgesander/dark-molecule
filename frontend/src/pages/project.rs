@@ -5,8 +5,6 @@ use crate::components::project_sidebar::ProjectSidebar;
 use crate::components::project_hosts::ProjectHosts;
 use crate::components::project_issues::ProjectIssues;
 use crate::components::project_reports::ProjectReports;
-use crate::components::project_services::ProjectServices;
-use crate::components::project_settings::ProjectSettings;
 use crate::debug_log;
 
 #[derive(Properties, PartialEq)] 

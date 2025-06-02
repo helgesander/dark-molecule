@@ -75,10 +75,6 @@ impl Project {
         }
     }
 
-    pub fn get_project_by_name(conn: &mut PgConnection, name: String) {
-        unimplemented!()
-    }
-
     pub fn get_projects(conn: &mut PgConnection) -> QueryResult<Vec<ProjectOverviewResponse>> {
         use crate::db::schema::projects::dsl::*;
         let all_projects = projects::table().load::<Project>(conn)?;

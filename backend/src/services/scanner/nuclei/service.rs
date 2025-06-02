@@ -5,18 +5,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use async_trait::async_trait;
-use diesel::PgConnection;
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use uuid::Uuid;
 use crate::utils::errors::AppError;
-
-use crate::models::scan::{NewScan, Scan};
 use crate::dtos::handlers::{HostForm, IssueForm};
-use crate::models::issue::NewIssue;
 use crate::services::scanner::types::{AnyScanResult, Error};
-use crate::services::scanner::{ScanStatus, VulnerabilityScanner};
+use crate::services::scanner::VulnerabilityScanner;
 
 #[derive(Clone)]
 pub struct NucleiService {
@@ -167,10 +163,6 @@ impl NucleiService {
 impl VulnerabilityScanner for NucleiService {
     type ScanRequest = NucleiScanRequest;
     type ScanResult = NucleiScanResult;
-
-    async fn create_scan(&mut self, conn: &mut PgConnection, project_id: Uuid, request: Self::ScanRequest) -> Result<String, Error> {
-        todo!()
-    }
 
     async fn get_scan_result(&self, task_id: &str) -> Result<Self::ScanResult, Error> {
         let output_file = self.scans_dir.join(task_id).join("results.json");

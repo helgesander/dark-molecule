@@ -85,10 +85,10 @@ impl Host {
             .get_result::<Host>(conn)
     }
 
-    pub fn get_host(conn: &mut PgConnection, id: i32) -> QueryResult<Option<Host>> {
+    pub fn get_host(conn: &mut PgConnection, host_id: i32) -> QueryResult<Option<Host>> {
         use crate::db::schema::hosts::dsl::*;
         hosts
-            .filter(id.eq(id))
+            .filter(id.eq(host_id))
             .select(Host::as_select())
             .first(conn)
             .optional()

@@ -16,15 +16,6 @@ pub enum Severity {
     Critical,
 }
 
-pub fn get_severity_color(severity: &Severity) -> &str {
-    match severity {
-        Severity::Low => "text-blue-500",
-        Severity::Medium => "text-yellow-500",
-        Severity::High => "text-orange-500",
-        Severity::Critical => "text-red-500",
-    }
-}
-
 pub fn calculate_severity(cvss: f64) -> Severity {
     match cvss {
         cvss if cvss < 4.0 => Severity::Low,

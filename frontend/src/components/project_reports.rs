@@ -3,7 +3,7 @@ use crate::api::{ApiClient, ReportPreview};
 use uuid::Uuid;
 use crate::components::report_form::ReportForm;
 use wasm_bindgen_futures;
-use web_sys::{Blob, Url, HtmlAnchorElement, Window, Document, Element};
+use web_sys::{Blob, Url, HtmlAnchorElement};
 use wasm_bindgen::JsCast;
 use js_sys::{Uint8Array, Array};
 
@@ -18,7 +18,6 @@ pub fn project_reports(props: &ProjectReportsProps) -> Html {
     let reports = use_state(|| props.reports.clone());
     let project_id = props.project_id;
 
-    // Загружаем отчеты при монтировании компонента
     {
         let reports = reports.clone();
         use_effect_with_deps(move |_| {
@@ -37,17 +36,14 @@ pub fn project_reports(props: &ProjectReportsProps) -> Html {
             let project_id = project_id;
             wasm_bindgen_futures::spawn_local(async move {
                 if let Ok(report_data) = ApiClient::get().download_report(project_id, report_id).await {
-                    // Создаем Blob из данных отчета
                     let array = Uint8Array::new_with_length(report_data.data.len() as u32);
                     array.copy_from(&report_data.data);
                     let blob = Blob::new_with_u8_array_sequence(&Array::of1(&array))
                         .expect("Failed to create blob");
 
-                    // Создаем URL для Blob
                     let url = Url::create_object_url_with_blob(&blob)
                         .expect("Failed to create object URL");
 
-                    // Создаем временный элемент <a> для скачивания
                     let window = web_sys::window().expect("No window found");
                     let document = window.document().expect("No document found");
                     let anchor = document.create_element("a")
@@ -55,16 +51,13 @@ pub fn project_reports(props: &ProjectReportsProps) -> Html {
                         .dyn_into::<HtmlAnchorElement>()
                         .expect("Failed to cast to HtmlAnchorElement");
 
-                    // Устанавливаем атрибуты для скачивания
                     anchor.set_href(&url);
                     anchor.set_download(&report_data.filename);
                     anchor.style().set_property("display", "none").expect("Failed to set style");
 
-                    // Добавляем элемент в DOM и эмулируем клик
                     document.body().expect("No body found").append_child(&anchor).expect("Failed to append anchor");
                     anchor.click();
 
-                    // Очищаем
                     document.body().expect("No body found").remove_child(&anchor).expect("Failed to remove anchor");
                     Url::revoke_object_url(&url).expect("Failed to revoke object URL");
                 }

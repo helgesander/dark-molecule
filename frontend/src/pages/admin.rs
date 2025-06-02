@@ -2,7 +2,6 @@ use yew::prelude::*;
 use crate::components::{
     admin_sidebar::AdminSidebar,
     admin_users::AdminUsers,
-    admin_settings::AdminSettings,
     admin_teams::AdminTeams,
     admin_report_templates::AdminReportTemplates,
 };

@@ -15,12 +15,7 @@ pub type DbConnection = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
 pub fn establish_connection() -> Pool {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
-    r2d2::Pool::builder()
+    Pool::builder()
         .build(manager)
         .expect("Failed to create pool")
-}
-
-pub fn get_connection() -> Result<PgConnection, diesel::ConnectionError> {
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
 }

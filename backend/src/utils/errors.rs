@@ -1,6 +1,6 @@
 use actix_multipart::MultipartError;
 use actix_web::error::BlockingError;
-use actix_web::http::{header, StatusCode};
+use actix_web::http::StatusCode;
 use actix_web::{error, HttpResponse};
 use derive_more::{Display, Error};
 use diesel::r2d2::Error as R2D2Error;
@@ -14,8 +14,6 @@ pub enum AppError {
     InternalServerError,
     #[display("Bad Request")]
     BadRequest,
-    #[display("Timeout")]
-    Timeout,
     #[display("Not Found")]
     NotFound,
     #[display("Internal Server Error")]
@@ -72,7 +70,6 @@ impl error::ResponseError for AppError {
         match *self {
             AppError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::BadRequest => StatusCode::BAD_REQUEST,
-            AppError::Timeout => StatusCode::GATEWAY_TIMEOUT,
             AppError::DatabaseError => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::UnauthorizedError => StatusCode::UNAUTHORIZED,
             AppError::NotFound => StatusCode::NOT_FOUND,
@@ -90,9 +87,6 @@ impl error::ResponseError for AppError {
                 status: 400,
                 error: "Bad Request",
             }),
-            AppError::Timeout => HttpResponse::TooManyRequests()
-                .append_header((header::LOCATION, "/"))
-                .finish(),
             AppError::DatabaseError => HttpResponse::InternalServerError().json(AppErrorJson {
                 status: 505,
                 error: "Internal Server Error",

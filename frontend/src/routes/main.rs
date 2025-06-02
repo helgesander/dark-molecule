@@ -1,18 +1,15 @@
 use yew_router::prelude::*;
 use yew::prelude::*;
 use crate::pages::{
-    main::MainPage,
     login::LoginPage,
     not_found::NotFoundPage,
     register::RegisterPage,
     projects::ProjectsPage,
-    profile::ProfilePage,
     admin::AdminPage
 };
-
+use crate::pages::profile::ProfilePage;
 use crate::routes::{
     project::{ProjectRoute, switch_project},
-    admin::{AdminRoute, switch_admin}
 };
 
 #[derive(Clone, Debug, Routable, PartialEq)]

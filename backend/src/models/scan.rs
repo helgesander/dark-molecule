@@ -40,9 +40,9 @@ impl Scan {
         scans.find(scan_id).first(conn).optional()
     }
 
-    pub fn find_by_project(conn: &mut PgConnection, project_id: Uuid) -> QueryResult<Vec<Scan>> {
+    pub fn find_by_project(conn: &mut PgConnection, prjct_id: Uuid) -> QueryResult<Vec<Scan>> {
         use crate::db::schema::scans::dsl::*;
-        scans.filter(project_id.eq(project_id)).load::<Scan>(conn)
+        scans.filter(project_id.eq(prjct_id)).load::<Scan>(conn)
     }
 
     pub fn create_scan(conn: &mut PgConnection, scan: NewScan) -> QueryResult<Scan> {

@@ -1,6 +1,6 @@
 use actix_session::SessionExt;
 use actix_web::body::MessageBody;
-use actix_web::dev::{Service, ServiceRequest, ServiceResponse};
+use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::middleware::Next;
 use actix_web::Error;
 use serde::{Deserialize, Serialize};
@@ -14,8 +14,6 @@ pub enum Role {
     User,
     Guest,
 }
-
-// TODO: fix to AppError later
 
 pub async fn auth_middleware(
     req: ServiceRequest,

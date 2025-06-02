@@ -1,4 +1,3 @@
-use std::fmt::format;
 use gloo::net::http::Request;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -322,47 +321,6 @@ impl ApiClient {
         Ok(login_response.user)
     }
 
-    pub async fn get_project(&self, id: Uuid) -> Result<Project, String> {
-        let response = Request::get(&format!("{}/project/{}", self.base_url, id))
-            .header("Content-Type", "application/json")
-            .send()
-            .await
-            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
-
-        if response.status() == 401 {
-            return Err("unauthorized".to_string());
-        }
-
-        if !response.ok() {
-            return Err(format!("Ошибка сервера: {}", response.status()));
-        }
-
-        response.json::<Project>()
-            .await
-            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
-    }
-
-    pub async fn get_project_hosts(&self, project_id: Uuid) -> Result<Vec<Host>, String> {
-        let response = Request::get(&format!("{}/project/{}/hosts", self.base_url, project_id))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
-            .send()
-            .await
-            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
-
-        if response.status() == 401 {
-            return Err("unauthorized".to_string());
-        }
-
-        if !response.ok() {
-            return Err(format!("Ошибка сервера: {}", response.status()));
-        }
-
-        response.json::<Vec<Host>>()
-            .await
-            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
-    }
-
     pub async fn delete_host(&self, project_id: Uuid, host_id: i32) -> Result<(), String> {
         let response = Request::delete(&format!("{}/project/{}/host/{}", self.base_url, project_id, host_id))
             .send()
@@ -378,27 +336,6 @@ impl ApiClient {
         }
 
         Ok(())
-    }
-
-    pub async fn get_project_issues(&self, project_id: Uuid) -> Result<Vec<Issue>, String> {
-        let response = Request::get(&format!("{}/project/{}/issues", self.base_url, project_id))
-            .header("Content-Type", "application/json")
-            .credentials(RequestCredentials::Include)
-            .send()
-            .await
-            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
-
-        if response.status() == 401 {
-            return Err("unauthorized".to_string());
-        }
-
-        if !response.ok() {
-            return Err(format!("Ошибка сервера: {}", response.status()));
-        }
-
-        response.json::<Vec<Issue>>()
-            .await
-            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
 
     pub async fn get_full_project(&self, project_id: Uuid) -> Result<Project, String> {
@@ -755,10 +692,7 @@ impl ApiClient {
 
         let content_disposition = response.headers()
             .get("content-disposition")
-            .unwrap_or_default(); // TODO: fix this later
-
-        let headers = response.headers().values(); // TODO: check all headers later
-
+            .unwrap_or_default();
         debug_log!("Content-Disposition: {}", content_disposition);
 
         let filename =

@@ -2,9 +2,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use crate::routes::main::{MainRoute, switch_main};
 use wasm_logger;
-use gloo::console::log;
 use crate::components::navbar::Navbar;
-use crate::context::user_context::{UserContext, create_user_context};
 use crate::context::user_provider::UserProvider;
 
 
