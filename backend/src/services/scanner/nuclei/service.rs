@@ -5,12 +5,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use async_trait::async_trait;
-use log::error;
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use serde_json;
+use tracing::field::debug;
 use uuid::Uuid;
 use crate::utils::errors::AppError;
 use crate::dtos::handlers::{HostForm, IssueForm};
+use crate::models::host::Host;
 use crate::services::scanner::types::{AnyScanResult, Error};
 use crate::services::scanner::VulnerabilityScanner;
 
@@ -81,9 +83,9 @@ impl NucleiService {
                 .ok_or(Error::ParseError("Missing template name".to_string()))?
                 .to_string();
 
-            let host = raw_finding["host"]
+            let host = raw_finding["ip"]
                 .as_str()
-                .ok_or(Error::ParseError("Missing host".to_string()))?
+                .unwrap_or_else(|| "127.0.0.2")
                 .to_string();
 
             let severity = info["severity"]
@@ -91,15 +93,23 @@ impl NucleiService {
                 .ok_or(Error::ParseError("Missing severity".to_string()))?
                 .to_string();
 
-            let description = info["description"]
+            let mut description = info["description"]
                 .as_str()
                 .map(|s| s.to_string());
+
+            if template_name.eq("HTTP Missing Security Headers") {
+                let matcher = raw_finding["matcher-name"]
+                    .as_str()
+                    .ok_or(Error::ParseError("Missing matcher".to_string()))?
+                    .to_string();
+                description = Some(format!("The \"{}\" header is not set", matcher));
+            }
 
             let remediation = info["remediation"]
                 .as_str()
                 .map(|s| s.to_string());
 
-            let cvss = info["cvss-score"]
+            let cvss = raw_finding["cvss-score"]
                 .as_str()
                 .map(|s| s.parse::<f64>().unwrap_or(0.0));
 
@@ -116,7 +126,7 @@ impl NucleiService {
                     name: template_name,
                     description,
                     remediation,
-                    cvss
+                    cvss,
                 },
             });
         }
@@ -127,39 +137,31 @@ impl NucleiService {
     pub fn parse_to_issues(
         findings: Vec<NucleiFinding>,
     ) -> Vec<IssueForm> {
-        let mut grouped: HashMap<String, Vec<NucleiFinding>> = HashMap::new();
-
+        let mut issues = Vec::new();
         for finding in findings {
-            grouped.entry(finding.info.name.clone())
-                .or_default()
-                .push(finding);
+            let mut host: Vec<HostForm> = Vec::new();
+            host.push(HostForm {
+                hostname: None,
+                ip_address: finding.host,
+            });
+
+            let mut cvss;
+            if let Some(c) = finding.info.cvss {
+                cvss = c;
+            } else {
+                cvss = Self::severity_to_cvss(&*finding.severity);
+            }
+
+            issues.push( IssueForm {
+                name: finding.info.name.clone(),
+                description: finding.info.description,
+                mitigation: finding.info.remediation.clone(),
+                cvss: Some(cvss),
+                hosts: host,
+            })
         }
 
-        grouped.into_iter().map(|(name, group)| {
-            let description = if group.len() > 1 {
-                format!(
-                    "Found {} instances of this vulnerability.\nFirst occurrence: {}",
-                    group.len(),
-                    group[0].matched_at
-                )
-            } else {
-                format!("Found at: {}", group[0].matched_at)
-            };
-
-            let cvss = Self::severity_to_cvss(&group[0].severity);
-            let hosts = group.iter().map(|f| HostForm {
-                hostname: None,
-                ip_address: f.host.clone(),
-            }).collect();
-
-            IssueForm {
-                name,
-                description: Some(description),
-                mitigation: group[0].info.remediation.clone(),
-                cvss: Some(cvss),
-                hosts,
-            }
-        }).collect()
+        issues
     }
 }
 
@@ -200,9 +202,10 @@ impl VulnerabilityScanner for NucleiService {
         })?;
 
         let output_file = format!("{}/scan.json", scan_path);
+        debug!("Run command nuclei -u {} -t /home/helgesander/nuclei-templates -je {}", &target.replace(" ", ","), &output_file);
         let status = tokio::process::Command::new("nuclei")
             .arg("-u")
-            .arg(&target)
+            .arg(&target.replace(" ", ","))
             .arg("-t")
             .arg("/home/helgesander/nuclei-templates")
             .arg("-je")

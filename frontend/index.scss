@@ -2102,3 +2102,49 @@ input[type="submit"] {
     }
 
 }
+
+.target-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.target-input-group input {
+    flex: 1;
+}
+
+.remove-target {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    border-radius: 4px;
+}
+
+.remove-target:hover {
+    background-color: #f0f0f0;
+    color: #ff4444;
+}
+
+.add-target {
+    background: none;
+    border: 1px dashed #ccc;
+    color: #666;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.add-target:hover {
+    background-color: #f0f0f0;
+    border-color: #999;
+} 
