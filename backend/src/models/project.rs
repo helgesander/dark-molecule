@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::dtos::handlers::ProjectForm;
 use crate::models::host::{Host, HostResponse};
-use crate::models::issue::Issue;
+use crate::models::issue::{Issue, IssueFullResponse};
 
 #[derive(Queryable, Selectable, Serialize, Identifiable, Deserialize, Debug)]
 #[diesel(table_name = crate::db::schema::projects)]
@@ -47,7 +47,7 @@ pub struct ProjectFullResponse {
     end_date: NaiveDate,
     folder: String,
     team_id: Uuid,
-    issues: Vec<Issue>,
+    issues: Vec<IssueFullResponse>,
     hosts: Vec<HostResponse>,
 }
 
@@ -141,6 +141,14 @@ impl Project {
     }
 
     pub fn to_full_response(&self, conn: &mut PgConnection) -> QueryResult<ProjectFullResponse> {
+
+        let full_issues = Issue::get_issues_by_project_id(conn, self.id)?
+            .iter().filter_map(|issue| {
+                issue.to_full_response(conn)
+                    .ok()
+            })
+            .collect::<Vec<IssueFullResponse>>();
+
         Ok(ProjectFullResponse {
             id: self.id,
             name: self.name.clone(),
@@ -150,7 +158,7 @@ impl Project {
             end_date: self.end_date,
             folder: self.folder.clone(),
             team_id: self.team_id,
-            issues: Issue::get_issues_by_project_id(conn, self.id)?,
+            issues: full_issues,
             hosts: Host::get_hosts_by_project_id(conn, self.id)?,
         })
     }

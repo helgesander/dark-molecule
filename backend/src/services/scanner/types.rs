@@ -5,7 +5,7 @@ use thiserror::Error;
 use uuid::Uuid;
 use crate::dtos::handlers::HostForm;
 use crate::models::host::{Host, NewHost};
-use crate::models::issue::Issue;
+use crate::models::issue::{Issue, IssueFullResponse};
 use crate::services::scanner::nmap::service::NmapScanResult;
 use crate::services::scanner::nuclei::service::NucleiScanResult;
 use crate::utils::errors::AppError;

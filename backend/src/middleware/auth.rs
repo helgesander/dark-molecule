@@ -15,7 +15,6 @@ pub enum Role {
     Guest,
 }
 
-// TODO: fix to AppError later
 
 pub async fn auth_middleware(
     req: ServiceRequest,

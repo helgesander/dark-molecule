@@ -101,8 +101,10 @@ pub fn navbar(props: &NavbarProps) -> Html {
                     </div>
                 } else {
                     <Link<MainRoute> to={MainRoute::Login} classes="nav-link">
-                        <img src="/static/icons/login.svg" class="icon" alt="Войти" />
-                        <span>{"Войти"}</span>
+                        <button class="button secondary">
+                            <img src="/static/icons/login.svg" class="icon" alt="Войти" />
+                            <span>{"Войти"}</span>
+                        </button>
                     </Link<MainRoute>>
                 }
             </div>

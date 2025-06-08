@@ -166,31 +166,6 @@ impl NmapService {
             fs::read_to_string(&output_file).map_err(|e| Error::IoError(e.to_string()))?;
 
         let result_hosts = NmapService::parse_up_hosts(&content)?;
-        // let mut result: Vec<HostResponse> = Vec::new();
-
-        // let mut new_hosts: Vec<HostForm> = Vec::new();
-        //
-        // for host in result_hosts {
-        //     new_hosts.push(HostForm {
-        //         hostname: None,
-        //         ip_address: host.clone(),
-        //     })
-        // }
-        //
-        // let inserted_hosts = models::host::Host::create_hosts(conn, new_hosts, p_id)
-        //     .map_err(|e| {
-        //         error!("Can't create hosts after scan: {}", e);
-        //         Error::Database(e.to_string())
-        //     })?;
-        //
-        // for host in inserted_hosts {
-        //     result.push(HostResponse {
-        //         id: host.id,
-        //         hostname: None,
-        //         ip_address: host.ip_address,
-        //     });
-        // }
-
         let scan_result = NmapScanResult { output_file: output_file_str.to_string(), hosts: result_hosts };
         
         let mut scans = self.active_scans.lock().await;
@@ -218,7 +193,6 @@ impl VulnerabilityScanner for NmapService {
         let output_dir = self.scans_dir.join(scan_id.to_string());
         fs::create_dir_all(&output_dir).map_err(|e| Error::IoError(e.to_string()))?;
 
-        // Initialize scan state
         let mut scans = self.active_scans.lock().await;
         scans.insert(
             scan_id.to_string(),
@@ -330,7 +304,6 @@ impl VulnerabilityScanner for NmapService {
 
         let output_file = format!("{}/scan.xml", scan_path);
 
-        // 2. Запуск nmap с ожиданием завершения
         let status = tokio::process::Command::new("nmap")
             .arg("-oX")
             .arg(&output_file)
@@ -349,7 +322,6 @@ impl VulnerabilityScanner for NmapService {
             return Err(AppError::InternalServerError);
         }
 
-        // 3. Чтение и парсинг результатов
         let xml_output = tokio::fs::read_to_string(&output_file).await.map_err(|e| {
             error!("Failed to read result file: {}", e);
             AppError::InternalServerError

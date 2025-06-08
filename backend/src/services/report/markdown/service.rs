@@ -160,7 +160,6 @@ impl ReportGenerator for MarkdownService {
                 Error::TemplateError(format!("Failed to parse template: {}", e))
             })?;
 
-        // Подготавливаем данные для шаблона
         let data = serde_json::json!({
             "project": project,
             "now": Utc::now()
