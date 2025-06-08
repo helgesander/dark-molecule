@@ -11,7 +11,7 @@ use crate::middleware::auth::auth_middleware;
 fn init_project_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/project")
-            .wrap(from_fn(auth_middleware))
+            // .wrap(from_fn(auth_middleware))
             .service(project_handlers::get_projects_handler)
             .service(project_handlers::get_project_handler)
             .service(project_handlers::create_project_handler)
@@ -36,13 +36,13 @@ fn init_project_routes(cfg: &mut web::ServiceConfig) {
 fn init_template_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/template")
-            .wrap(from_fn(auth_middleware))
+            // .wrap(from_fn(auth_middleware))
             .service(template_handlers::get_template_handler)
             .service(template_handlers::create_template_handler)
     )
         .service(
             web::scope("/templates")
-                .wrap(from_fn(auth_middleware))
+                // .wrap(from_fn(auth_middleware))
                 .service(template_handlers::get_templates_preview_handler)
         );
 }
@@ -58,7 +58,7 @@ fn init_auth_routes(cfg: &mut web::ServiceConfig) {
 fn init_user_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/user")
-            .wrap(from_fn(auth_middleware))
+            // .wrap(from_fn(auth_middleware))
             .service(user_handlers::create_user_handler)
             .service(user_handlers::get_users_handler)
             .service(user_handlers::delete_user_handler)
@@ -69,7 +69,7 @@ fn init_user_routes(cfg: &mut web::ServiceConfig) {
 fn init_team_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/team")
-            .wrap(from_fn(auth_middleware))
+            // .wrap(from_fn(auth_middleware))
             .service(team_handlers::create_team_handler)
             .service(team_handlers::get_teams_handler)
             .service(team_handlers::get_team_handler),

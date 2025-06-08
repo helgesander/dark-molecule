@@ -47,6 +47,7 @@ pub struct NucleiFindingInfo {
     pub name: String,
     pub description: Option<String>,
     pub remediation: Option<String>,
+    pub cvss: Option<f64>
 }
 
 impl NucleiService {
@@ -98,6 +99,10 @@ impl NucleiService {
                 .as_str()
                 .map(|s| s.to_string());
 
+            let cvss = info["cvss-score"]
+                .as_str()
+                .map(|s| s.parse::<f64>().unwrap_or(0.0));
+
             let matched_at = raw_finding["matched-at"]
                 .as_str()
                 .ok_or(Error::ParseError("Missing matched-at".to_string()))?
@@ -111,6 +116,7 @@ impl NucleiService {
                     name: template_name,
                     description,
                     remediation,
+                    cvss
                 },
             });
         }
@@ -121,7 +127,6 @@ impl NucleiService {
     pub fn parse_to_issues(
         findings: Vec<NucleiFinding>,
     ) -> Vec<IssueForm> {
-        // Group by vulnerability name
         let mut grouped: HashMap<String, Vec<NucleiFinding>> = HashMap::new();
 
         for finding in findings {
@@ -130,7 +135,6 @@ impl NucleiService {
                 .push(finding);
         }
 
-        // Convert to IssueForm
         grouped.into_iter().map(|(name, group)| {
             let description = if group.len() > 1 {
                 format!(
@@ -199,6 +203,8 @@ impl VulnerabilityScanner for NucleiService {
         let status = tokio::process::Command::new("nuclei")
             .arg("-u")
             .arg(&target)
+            .arg("-t")
+            .arg("/home/helgesander/nuclei-templates")
             .arg("-je")
             .arg(&output_file)
             .stdout(Stdio::null())
