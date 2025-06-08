@@ -958,73 +958,6 @@ footer {
     width: 100%;
 }
 
-.issue-card {
-    width: 100%;
-    box-sizing: border-box;
-    background-color: #f3f4f6;
-    border-radius: 0.75rem;
-    padding: 1.5rem 2rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    color: #18181a;
-
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.10);
-    }
-
-    .issue-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-
-        .issue-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #18181a;
-            margin: 0;
-            flex: 1;
-        }
-
-        .issue-meta {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-
-            .severity, .status {
-                padding: 0.25rem 0.75rem;
-                border-radius: 0.375rem;
-                font-size: 0.875rem;
-                font-weight: 500;
-            }
-
-            .severity {
-                &.high { background-color: #fee2e2; color: #dc2626; }
-                &.medium { background-color: #fef3c7; color: #d97706; }
-                &.low { background-color: #dcfce7; color: #16a34a; }
-            }
-
-            .status {
-                &.open { background-color: #dbeafe; color: #2563eb; }
-                &.in-progress { background-color: #f3e8ff; color: #7c3aed; }
-                &.closed { background-color: #e5e7eb; color: #4b5563; }
-            }
-        }
-    }
-
-    .issue-description {
-        color: #6b7280;
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin: 0;
-    }
-}
-
 .edit-issue-form {
     padding: 20px;
     h1 {
@@ -1202,6 +1135,23 @@ footer {
                 }
             }
         }
+
+        .related-hosts {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-top: 8px;
+            font-size: 0.9em;
+            margin: 2em
+        }
+
+        .issue-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            margin-left: auto;
+        }
     }
 }
 
@@ -1227,6 +1177,31 @@ footer {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: relative;
     z-index: 1001;
+
+    .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: $text-color;
+            font-weight: 500;
+        }
+
+        input, select {
+            padding: 0.75rem;
+            border: 1px solid $border-color;
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: $text-color;
+            font-size: 1rem;
+
+            &:focus {
+                outline: none;
+                border-color: $primary-color;
+            }
+        }
+    }
 }
 
 .modal-header {
@@ -1259,38 +1234,38 @@ footer {
     }
 }
 
-.form-group {
-    margin-bottom: 1.5rem;
-
-    label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: $text-color;
-        font-weight: 500;
-    }
-
-    input,
-    select,
-    textarea {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid $border-color;
-        border-radius: 4px;
-        background-color: #ffffff;
-        color: $text-color;
-        font-size: 1rem;
-
-        &:focus {
-            outline: none;
-            border-color: $primary-color;
-        }
-    }
-
-    textarea {
-        min-height: 100px;
-        resize: vertical;
-    }
-}
+//.form-group {
+//    margin-bottom: 1.5rem;
+//
+//    label {
+//        display: block;
+//        margin-bottom: 0.5rem;
+//        color: $text-color;
+//        font-weight: 500;
+//    }
+//
+//    input,
+//    select,
+//    textarea {
+//        width: 100%;
+//        padding: 0.75rem;
+//        border: 1px solid $border-color;
+//        border-radius: 4px;
+//        background-color: #ffffff;
+//        color: $text-color;
+//        font-size: 1rem;
+//
+//        &:focus {
+//            outline: none;
+//            border-color: $primary-color;
+//        }
+//    }
+//
+//    textarea {
+//        min-height: 100px;
+//        resize: vertical;
+//    }
+//}
 
 .form-actions {
     display: flex;
@@ -1518,104 +1493,6 @@ footer {
 }
 
 
-.create-user-page {
-    max-width: 600px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: var(--surface-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-    .section-header {
-        margin-bottom: 2rem;
-        text-align: center;
-
-        h2 {
-            color: var(--text-color);
-            font-size: 1.8rem;
-            margin: 0;
-        }
-    }
-
-    .error-message {
-        background-color: var(--error-color);
-        color: white;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-    }
-
-    .create-user-form {
-        .form-group {
-            margin-bottom: 1.5rem;
-
-            label {
-                display: block;
-                margin-bottom: 0.5rem;
-                color: var(--text-color);
-                font-weight: 500;
-            }
-
-            input[type="text"],
-            input[type="email"],
-            input[type="password"] {
-                width: 100%;
-                padding: 0.75rem;
-                border: 1px solid var(--border-color);
-                border-radius: 4px;
-                background: var(--input-bg);
-                color: var(--text-color);
-                font-size: 1rem;
-                transition: border-color 0.2s;
-
-                &:focus {
-                    outline: none;
-                    border-color: var(--primary-color);
-                }
-            }
-
-            &.checkbox {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-
-                label {
-                    margin: 0;
-                    cursor: pointer;
-                }
-
-                input[type="checkbox"] {
-                    width: 1.2rem;
-                    height: 1.2rem;
-                    cursor: pointer;
-                }
-            }
-        }
-
-        .form-actions {
-            margin-top: 2rem;
-            text-align: center;
-
-            .button {
-                padding: 0.75rem 2rem;
-                font-size: 1rem;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                transition: background-color 0.2s;
-
-                &.primary {
-                    background-color: var(--primary-color);
-                    color: white;
-
-                    &:hover {
-                        background-color: var(--primary-color-dark);
-                    }
-                }
-            }
-        }
-    }
-}
 
 .modal-footer {
     display: flex;
@@ -1662,6 +1539,25 @@ footer {
     padding: 10px;
     background-color: var(--success-bg-color);
     border-radius: 4px;
+}
+
+.btn-icon {
+    padding: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .icon {
+        width: 20px;
+        height: 20px;
+        opacity: 0.6;
+    }
 }
 
 .hosts-section {
@@ -1732,25 +1628,6 @@ footer {
             display: flex;
             justify-content: flex-end;
             gap: 0.5rem;
-
-            .btn-icon {
-                padding: 0.5rem;
-                background: none;
-                border: none;
-                cursor: pointer;
-                border-radius: 6px;
-                transition: background-color 0.2s;
-
-                &:hover {
-                    background-color: rgba(0, 0, 0, 0.05);
-                }
-
-                .icon {
-                    width: 20px;
-                    height: 20px;
-                    opacity: 0.6;
-                }
-            }
         }
     }
 }
@@ -2149,6 +2026,27 @@ input[type="submit"] {
             outline: none;
             border-color: $primary-color;
         }
+
+    }
+
+    textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        background-color: #ffffff;
+        color: $text-color;
+        font-size: 1rem;
+
+        &:focus {
+            outline: none;
+            border-color: $primary-color;
+        }
+    }
+
+    textarea {
+        min-height: 100px;
+        resize: vertical;
     }
 }
 
@@ -2157,4 +2055,50 @@ input[type="submit"] {
     justify-content: flex-end;
     gap: 1rem;
     margin-top: 2rem;
+}
+
+.profile-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    gap: 8px;
+}
+
+.profile-link:hover {
+    opacity: 0.8;
+}
+
+.avatar-default, .username {
+    display: inline-block;
+}
+
+.template-card {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #fff;
+    border-radius: 0.75rem;
+    padding: 2rem 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #18181a;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.10);
+    }
+
+    .project-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #18181a;
+        margin: 0;
+        flex: 1;
+        text-align: left;
+    }
+
 }

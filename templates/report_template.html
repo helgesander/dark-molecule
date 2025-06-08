@@ -141,14 +141,7 @@
     <div class="project-info">
         <p><strong>Дата начала:</strong> {{formatDate project.start_date}}</p>
         <p><strong>Дата окончания:</strong> {{formatDate project.end_date}}</p>
-        <p><strong>Область исследования:</strong> {{project.scope}}</p>
-    </div>
-
-    <div class="section">
-        <h2 class="section-title">Описание проекта</h2>
-        <div class="card">
-            <p>{{project.description}}</p>
-        </div>
+        {{ #if project.scope }}<p><strong>Область исследования:</strong> {{project.scope}}</p>{{/if}}
     </div>
 
     <div class="section">

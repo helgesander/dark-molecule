@@ -101,6 +101,7 @@ pub struct Issue {
     pub description: Option<String>,
     pub mitigation: Option<String>,
     pub cvss: f64,
+    pub hosts: Vec<Host>
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -336,6 +337,45 @@ impl ApiClient {
         }
 
         Ok(())
+    }
+
+    pub async fn delete_issue(&self, project_id: Uuid, issue_id: Uuid) -> Result<(), String> {
+        let response = Request::delete(&format!("{}/project/{}/issue/{}", self.base_url, project_id, issue_id))
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if response.status() == 401 {
+            return Err("unauthorized".to_string());
+        }
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        Ok(())
+
+    }
+
+    pub async fn get_project_issues(&self, project_id: Uuid) -> Result<Vec<Issue>, String> {
+        let response = Request::get(&format!("{}/project/{}/issues", self.base_url, project_id))
+            .header("Content-Type", "application/json")
+            .credentials(RequestCredentials::Include)
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка при отправке запроса: {}", e))?;
+
+        if response.status() == 401 {
+            return Err("unauthorized".to_string());
+        }
+
+        if !response.ok() {
+            return Err(format!("Ошибка сервера: {}", response.status()));
+        }
+
+        response.json::<Vec<Issue>>()
+            .await
+            .map_err(|e| format!("Ошибка при чтении ответа: {}", e))
     }
 
     pub async fn get_full_project(&self, project_id: Uuid) -> Result<Project, String> {

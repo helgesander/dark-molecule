@@ -15,6 +15,7 @@ pub enum Role {
     Guest,
 }
 
+
 pub async fn auth_middleware(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
