@@ -1,11 +1,11 @@
-use diesel::{PgConnection, QueryResult};
+use diesel::PgConnection;
 use log::error;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 use crate::dtos::handlers::HostForm;
-use crate::models::host::{Host, NewHost};
-use crate::models::issue::{Issue, IssueFullResponse};
+use crate::models::host::Host;
+use crate::models::issue::Issue;
 use crate::services::scanner::nmap::service::NmapScanResult;
 use crate::services::scanner::nuclei::service::NucleiScanResult;
 use crate::utils::errors::AppError;
@@ -26,12 +26,6 @@ pub enum Error {
     IoError(String),
     #[error("Output parsing failed: {0}")]
     ParseError(String),
-    #[error("Invalid request: {0}")]
-    InvalidRequest(String),
-    #[error("Database error: {0}")]
-    Database(String),
-    #[error("Scan not found: {0}")]
-    NotFound(String),
 }
 
 impl From<quick_xml::Error> for Error {
@@ -43,12 +37,6 @@ impl From<quick_xml::Error> for Error {
 impl From<quick_xml::DeError> for Error {
     fn from(e: quick_xml::DeError) -> Self {
         Error::ParseError(e.to_string())
-    }
-}
-
-impl ScanStatus {
-    pub fn is_completed(&self) -> bool {
-        matches!(self, ScanStatus::Completed)
     }
 }
 
@@ -67,12 +55,6 @@ pub enum AnyScanResult {
 }
 
 impl AnyScanResult {
-    pub fn output_file(&self) -> String {
-        match &self {
-            AnyScanResult::Nmap(res) => res.output_file.clone(),
-            AnyScanResult::Nuclei(res) => res.output_file.clone(),
-        }
-    }
 
     pub fn save_data(&self, project_id: Uuid, conn: &mut PgConnection) -> Result<(), AppError> {
         match &self {

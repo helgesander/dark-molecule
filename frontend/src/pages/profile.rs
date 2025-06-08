@@ -1,7 +1,7 @@
-use yew::prelude::*;
-use crate::api::{ApiClient, User};
+use crate::api::ApiClient;
 use crate::context::user_context::UserContext;
 use crate::debug_log;
+use yew::prelude::*;
 
 #[function_component(ProfilePage)]
 pub fn profile_page() -> Html {

@@ -5,18 +5,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use async_trait::async_trait;
-use diesel::PgConnection;
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use uuid::Uuid;
 use crate::utils::errors::AppError;
-
-use crate::models::scan::{NewScan, Scan};
 use crate::dtos::handlers::{HostForm, IssueForm};
-use crate::models::issue::NewIssue;
 use crate::services::scanner::types::{AnyScanResult, Error};
-use crate::services::scanner::{ScanStatus, VulnerabilityScanner};
+use crate::services::scanner::VulnerabilityScanner;
 
 #[derive(Clone)]
 pub struct NucleiService {
@@ -51,6 +47,7 @@ pub struct NucleiFindingInfo {
     pub name: String,
     pub description: Option<String>,
     pub remediation: Option<String>,
+    pub cvss: Option<f64>
 }
 
 impl NucleiService {
@@ -102,6 +99,10 @@ impl NucleiService {
                 .as_str()
                 .map(|s| s.to_string());
 
+            let cvss = info["cvss-score"]
+                .as_str()
+                .map(|s| s.parse::<f64>().unwrap_or(0.0));
+
             let matched_at = raw_finding["matched-at"]
                 .as_str()
                 .ok_or(Error::ParseError("Missing matched-at".to_string()))?
@@ -115,6 +116,7 @@ impl NucleiService {
                     name: template_name,
                     description,
                     remediation,
+                    cvss
                 },
             });
         }
@@ -125,7 +127,6 @@ impl NucleiService {
     pub fn parse_to_issues(
         findings: Vec<NucleiFinding>,
     ) -> Vec<IssueForm> {
-        // Group by vulnerability name
         let mut grouped: HashMap<String, Vec<NucleiFinding>> = HashMap::new();
 
         for finding in findings {
@@ -134,7 +135,6 @@ impl NucleiService {
                 .push(finding);
         }
 
-        // Convert to IssueForm
         grouped.into_iter().map(|(name, group)| {
             let description = if group.len() > 1 {
                 format!(
@@ -167,10 +167,6 @@ impl NucleiService {
 impl VulnerabilityScanner for NucleiService {
     type ScanRequest = NucleiScanRequest;
     type ScanResult = NucleiScanResult;
-
-    async fn create_scan(&mut self, conn: &mut PgConnection, project_id: Uuid, request: Self::ScanRequest) -> Result<String, Error> {
-        todo!()
-    }
 
     async fn get_scan_result(&self, task_id: &str) -> Result<Self::ScanResult, Error> {
         let output_file = self.scans_dir.join(task_id).join("results.json");
@@ -207,6 +203,8 @@ impl VulnerabilityScanner for NucleiService {
         let status = tokio::process::Command::new("nuclei")
             .arg("-u")
             .arg(&target)
+            .arg("-t")
+            .arg("/home/helgesander/nuclei-templates")
             .arg("-je")
             .arg(&output_file)
             .stdout(Stdio::null())

@@ -1,4 +1,4 @@
-use actix_web::{delete, get, post, put, web, HttpResponse};
+use actix_web::{delete, get, post, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use log::{debug, error};
@@ -72,16 +72,6 @@ pub async fn create_user_handler(
     Ok(HttpResponse::Created().json(created_user))
 }
 
-// TODO: fix put change_user_handler
-#[put("/{id}")]
-pub async fn change_user_handler(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    data: web::Json<UserForm>,
-) -> Result<HttpResponse, AppError> {
-    todo!()
-}
-
-// TODO: fix that only admin can delete user
 #[delete("/{id}")]
 pub async fn delete_user_handler(
     path: web::Path<String>,

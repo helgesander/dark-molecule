@@ -3,7 +3,6 @@ use crate::api::ApiClient;
 use crate::debug_log;
 use crate::api::UserForm;
 use crate::components::navbar::Navbar;
-use crate::components::footer::Footer;
 
 #[function_component(AdminCreateUserPage)]
 pub fn admin_create_user_page() -> Html {
@@ -113,7 +112,6 @@ pub fn admin_create_user_page() -> Html {
                     </form>
                 </div>
             </main>
-            <Footer />
         </>
     }
 } 

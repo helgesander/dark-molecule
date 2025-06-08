@@ -7,11 +7,11 @@ use actix_multipart::form::MultipartForm;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
-use futures::TryStreamExt;
+
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::db::schema::hosts;
+
 use crate::dtos::handlers::{
     CreateIssueForm, HostForm, IssueForm, ProjectForm, ProofOfConceptForm, ReportForm,
 };
@@ -21,7 +21,7 @@ use crate::models::project::Project;
 use crate::models::proof_of_concept::ProofOfConcept;
 use crate::models::report::Report;
 use crate::models::report_template::ReportTemplate;
-use crate::models::scan::{NewScan, Scan, UpdateScan};
+use crate::models::scan::{NewScan, Scan};
 use crate::services;
 use crate::services::report::{MarkdownService, ReportGenerator};
 use crate::services::scanner::{Scanner, ScannerService, VulnerabilityScanner};
@@ -667,7 +667,7 @@ pub async fn get_scan_result_handler(
             let scanner = nuclei.lock().await;
             match scanner.get_scan_result(&scan_id).await {
                 Ok(result) => Ok(HttpResponse::Ok().json(result)),
-                Err(e) => Err(AppError::InternalServerError),
+                Err(_) => Err(AppError::InternalServerError),
             }
         },
         "nmap" => {
@@ -675,7 +675,7 @@ pub async fn get_scan_result_handler(
             let scanner = nmap.lock().await;
             match scanner.get_scan_result(&scan_id).await {
                 Ok(result) => Ok(HttpResponse::Ok().json(result)),
-                Err(e) => Err(AppError::InternalServerError),
+                Err(_) => Err(AppError::InternalServerError),
             }
         },
         _ => Err(AppError::BadRequest),

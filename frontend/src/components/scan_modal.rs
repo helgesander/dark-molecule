@@ -1,5 +1,4 @@
 use yew::prelude::*;
-use yew_router::prelude::*;
 use crate::api::{ApiClient, ScanRequest};
 use uuid::Uuid;
 
@@ -16,7 +15,6 @@ pub fn scan_modal(props: &Props) -> Html {
     let target = use_state(|| String::new());
     let error = use_state(|| None::<String>);
 
-    // Клонируем всё необходимое из props
     let project_id = props.project_id;
     let scan_type = props.scan_type.clone();
     let on_close = props.on_close.clone();

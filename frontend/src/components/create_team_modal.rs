@@ -1,6 +1,5 @@
 use yew::prelude::*;
 use crate::api::ApiClient;
-use uuid::Uuid;
 use crate::context::user_context::UserContext;
 
 #[derive(Properties, PartialEq)]

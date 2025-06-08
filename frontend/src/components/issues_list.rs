@@ -2,7 +2,7 @@ use yew::prelude::*;
 use crate::api::{Issue};
 use uuid::Uuid;
 use crate::components::severity_icon::SeverityIcon;
-use crate::utils::{calculate_severity, Severity};
+use crate::utils::calculate_severity;
 
 #[derive(Properties, PartialEq)]
 pub struct IssuesListProps {
