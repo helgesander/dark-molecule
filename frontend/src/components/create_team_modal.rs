@@ -88,7 +88,7 @@ pub fn create_team_modal(props: &CreateTeamModalProps) -> Html {
     };
 
     html! {
-        <div class="modal-overlay">
+        <div class="modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>{"Create New Team"}</h2>
