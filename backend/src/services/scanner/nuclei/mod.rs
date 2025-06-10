@@ -1,2 +1,2 @@
 pub mod service;
-pub use service::{NucleiScanRequest, NucleiService};
+pub use service::NucleiService;

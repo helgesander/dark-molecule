@@ -2,7 +2,7 @@ use actix_web::middleware::from_fn;
 use actix_web::web;
 
 use crate::handlers::{
-    admin_handlers, auth_handlers, project_handlers, team_handlers, template_handlers,
+    auth_handlers, project_handlers, team_handlers, template_handlers,
     user_handlers,
 };
 use crate::middleware::auth::auth_middleware;
@@ -76,19 +76,12 @@ fn init_team_routes(cfg: &mut web::ServiceConfig) {
     );
 }
 
-fn init_admin_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/admin")
-        // .wrap(from_fn(auth_middleware))
-        .service(admin_handlers::get_admin_settings_handler));
-}
-
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")
             .configure(init_user_routes)
             .configure(init_project_routes)
             .configure(init_auth_routes)
-            .configure(init_admin_routes)
             .configure(init_team_routes)
             .configure(init_template_routes),
     );

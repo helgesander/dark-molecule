@@ -1,7 +1,7 @@
-use yew::prelude::*;
-use crate::api::{ApiClient, User};
+use crate::api::ApiClient;
 use crate::context::user_context::UserContext;
 use crate::debug_log;
+use yew::prelude::*;
 
 #[function_component(ProfilePage)]
 pub fn profile_page() -> Html {
@@ -41,7 +41,7 @@ pub fn profile_page() -> Html {
                             <img src={avatar.clone()} alt="Profile avatar" />
                         } else {
                             <div class="avatar-default">
-                                <img src="/assets/icons/avatar.svg" alt="Default avatar" />
+                                <img src="/static/icons/avatar.svg" alt="Default avatar" />
                             </div>
                         }
                     </div>  
@@ -52,9 +52,9 @@ pub fn profile_page() -> Html {
                 </div>
                 <div class="profile-details">
                     <div class="detail-group">
-                        <h3>{"User Information"}</h3>
+                        <h3>{"Информация о пользователе "}</h3>
                         <div class="detail-item">
-                            <span class="label">{"Role:"}</span>
+                            <span class="label">{"Роль:"}</span>
                             <span class="value">
                                 {if user.is_admin.unwrap_or(false) { "Administrator" } else { "User" }}
                             </span>

@@ -83,22 +83,62 @@ impl Issue {
         conn: &mut PgConnection,
         forms: Vec<IssueForm>,
         id_project: Uuid,
-    ) -> QueryResult<Vec<Issue>> {
+    ) -> QueryResult<()> {
         debug!("Create issues with data {:?}", forms);
-        let mut new_issues: Vec<NewIssue> = Vec::new();
-        for form in forms {
-            new_issues.push(NewIssue {
-                name: form.name.clone(),
-                description: form.description,
-                mitigation: form.mitigation,
-                cvss: form.cvss.unwrap_or(0.0),
-                project_id: id_project,
-            });
-        }
 
-        diesel::insert_into(issues::table)
-        .values(new_issues)
-            .get_results::<Issue>(conn)
+        conn.transaction(|conn| {
+            let new_issues: Vec<NewIssue> = forms.iter()
+                .map(|form| NewIssue {
+                    name: form.name.clone(),
+                    description: form.description.clone(),
+                    mitigation: form.mitigation.clone(),
+                    cvss: form.cvss.unwrap_or(0.0),
+                    project_id: id_project,
+                })
+                .collect();
+
+            let created_issues = diesel::insert_into(issues::table)
+                .values(new_issues)
+                .get_results::<Issue>(conn)?;
+
+
+            for (issue, form) in created_issues.iter().zip(forms.iter()) {
+                if !form.hosts.is_empty() {
+                    let mut host_ids = Vec::new();
+
+                    for host in &form.hosts {
+                        let mut query = hosts::table.into_boxed()
+                            .filter(hosts::ip_address.eq(&host.ip_address));
+
+                        if let Some(hostname) = &host.hostname {
+                            query = query.filter(hosts::hostname.eq(hostname));
+                        }
+
+                        if let Ok(host_id) = query.select(hosts::id).first::<i32>(conn) {
+                            host_ids.push(host_id);
+                        }
+                    }
+
+                    if !host_ids.is_empty() {
+                        let new_relations: Vec<_> = host_ids.iter()
+                            .map(|&host_id| (issue.id, host_id))
+                            .collect();
+
+                        diesel::insert_into(issue_hosts::table)
+                            .values(&new_relations.iter()
+                                .map(|&(issue_id, host_id)| (
+                                    issue_hosts::issue_id.eq(issue_id),
+                                    issue_hosts::host_id.eq(host_id)
+                                ))
+                                .collect::<Vec<_>>()
+                            )
+                            .execute(conn)?;
+                    }
+                }
+            }
+
+            Ok(())
+        })
     }
 
     pub fn update_issue(
@@ -108,7 +148,6 @@ impl Issue {
         issue_id: Uuid,
     ) -> QueryResult<usize> {
         conn.transaction(|conn| {
-            // Update the issue information
             let updated = diesel::update(issues::table)
                 .filter(issues::id.eq(issue_id))
                 .filter(issues::project_id.eq(id_project))
@@ -120,23 +159,17 @@ impl Issue {
                 ))
                 .execute(conn)?;
 
-            // First, delete all existing issue-host relationships
             diesel::delete(issue_hosts::table.filter(issue_hosts::issue_id.eq(issue_id)))
                 .execute(conn)?;
 
-            // Then, create new relationships for all hosts in the form
             if !form.hosts.is_empty() {
-                // Получаем ID хостов по одному, так как нам нужно учитывать опциональность
-                // hostname
                 let mut host_ids = Vec::new();
 
                 for host in &form.hosts {
                     let mut query = hosts::table.into_boxed();
 
-                    // Добавляем фильтр по IP-адресу
                     query = query.filter(hosts::ip_address.eq(&host.ip_address));
 
-                    // Если есть hostname, добавляем фильтр по нему
                     if let Some(hostname) = &host.hostname {
                         query = query.filter(hosts::hostname.eq(hostname));
                     }
@@ -175,7 +208,13 @@ impl Issue {
     pub fn delete_issue(conn: &mut PgConnection, issue_id: Uuid) -> QueryResult<usize> {
         use crate::db::schema::issues::dsl::*;
 
-        conn.transaction(|conn| diesel::delete(issues.filter(id.eq(issue_id))).execute(conn))
+        conn.transaction(|conn| {
+            diesel::delete(
+                issue_hosts::table
+                    .filter(issue_hosts::issue_id.eq(issue_id)))
+                    .execute(conn)?;
+            diesel::delete(issues.filter(id.eq(issue_id))).execute(conn)
+        })
     }
 
     pub fn get_issue(
@@ -194,17 +233,15 @@ impl Issue {
         }
     }
 
-    fn to_full_response(&self, conn: &mut PgConnection) -> QueryResult<IssueFullResponse> {
+    pub fn to_full_response(&self, conn: &mut PgConnection) -> QueryResult<IssueFullResponse> {
         use crate::db::schema::hosts::dsl::*;
         use crate::db::schema::issue_hosts::dsl::*;
 
-        // Сначала получаем ID хостов, связанных с уязвимостью
         let host_ids = issue_hosts
             .filter(issue_id.eq(self.id))
             .select(host_id)
             .load::<i32>(conn)?;
 
-        // Затем получаем информацию о хостах
         let related_hosts = hosts
             .filter(id.eq_any(host_ids))
             .select((id, hostname, ip_address))
@@ -226,4 +263,5 @@ impl Issue {
             hosts: related_hosts,
         })
     }
+
 }

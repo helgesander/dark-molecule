@@ -5,7 +5,6 @@ use crate::context::user_context::UserContext;
 use crate::context::user_context::User;
 use crate::api::ApiClient;
 use gloo::console::log;
-use crate::routes::admin::AdminRoute;
 
 
 #[derive(Properties, PartialEq)]
@@ -53,11 +52,6 @@ pub fn navbar(props: &NavbarProps) -> Html {
             if !user.is_all_none() {
                 <div class="navbar-menu">
                     <ul>
-                        // <li>
-                        //     <Link<MainRoute> to={MainRoute::MainPage} classes="nav-link">
-                        //         <span>{"Главная"}</span>
-                        //     </Link<MainRoute>>
-                        // </li>
                         <li>
                             <Link<MainRoute> to={MainRoute::Projects} classes="nav-link">
                                 <span>{"Проекты"}</span>
@@ -101,8 +95,10 @@ pub fn navbar(props: &NavbarProps) -> Html {
                     </div>
                 } else {
                     <Link<MainRoute> to={MainRoute::Login} classes="nav-link">
-                        <img src="/static/icons/login.svg" class="icon" alt="Войти" />
-                        <span>{"Войти"}</span>
+                        <button class="button secondary">
+                            <img src="/static/icons/login.svg" class="icon" alt="Войти" />
+                            <span>{"Войти"}</span>
+                        </button>
                     </Link<MainRoute>>
                 }
             </div>

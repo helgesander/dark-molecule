@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 use crate::routes::main::MainRoute;
-use crate::api::{ApiClient, User};
+use crate::api::ApiClient;
 use crate::context::user_context::{from_api_to_context, UserContext};
 use gloo::console::log;
 

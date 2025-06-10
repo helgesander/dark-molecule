@@ -1,9 +1,6 @@
 use yew::prelude::*;
 use crate::api::ApiClient;
 use crate::debug_log;
-use crate::components::navbar::Navbar;
-use crate::components::footer::Footer;
-use crate::components::create_team_modal::CreateTeamModal;
 
 
 #[derive(Properties, PartialEq)]

@@ -1,20 +1,11 @@
 use yew::prelude::*;
 use web_sys::{HtmlInputElement, HtmlTextAreaElement, HtmlSelectElement};
-use wasm_bindgen::JsCast;
-use crate::api::{CreateReportRequest, ApiClient, ReportTemplatePreview};
+use crate::api::{ApiClient, ReportTemplatePreview};
 use uuid::Uuid;
-use crate::debug_log;
 
 #[derive(Properties, PartialEq)]
 pub struct ReportFormProps {
     pub project_id: Uuid,
-}
-
-#[derive(Clone, PartialEq)]
-struct Template {
-    id: String,
-    name: String,
-    description: Option<String>,
 }
 
 #[function_component(ReportForm)]
@@ -26,7 +17,6 @@ pub fn report_form(props: &ReportFormProps) -> Html {
     let error_message = use_state(|| None::<String>);
     let templates = use_state(|| Vec::<ReportTemplatePreview>::new());
 
-    // Загружаем шаблоны при монтировании компонента
     {
         let templates = templates.clone();
         let error_message = error_message.clone();
@@ -133,31 +123,6 @@ pub fn report_form(props: &ReportFormProps) -> Html {
             }
 
             <form onsubmit={on_submit}>
-            //     <div class="form-group">
-            //         <label for="name">{"Название отчета"}</label>
-            //         <input
-            //             type="text"
-            //             id="name"
-            //             class="form-control"
-            //             value={(*name).clone()}
-            //             onchange={on_name_change}
-            //             required=true
-            //             placeholder="Введите название отчета"
-            //         />
-            //     </div>
-
-                // <div class="form-group">
-                //     <label for="description">{"Описание"}</label>
-                //     <textarea
-                //         id="description"
-                //         class="form-control"
-                //         value={(*description).clone()}
-                //         onchange={on_description_change}
-                //         rows="3"
-                //         placeholder="Добавьте описание отчета"
-                //     />
-                // </div>
-
                 <div class="form-group">
                     <label for="template">{"Шаблон отчета"}</label>
                     <select
@@ -176,15 +141,6 @@ pub fn report_form(props: &ReportFormProps) -> Html {
                             }
                         })}
                     </select>
-                    // {if let Some(template) = templates.iter().find(|t| Some(t.id.parse::<i32>().unwrap_or(0)) == *selected_template) {
-                    //     html! {
-                    //         <div class="template-description">
-                    //             {template.name.clone()}
-                    //         </div>
-                    //     }
-                    // } else {
-                    //     html! {}
-                    // }}
                 </div>
 
                 <button type="submit" class="btn btn-primary">

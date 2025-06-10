@@ -1,5 +1,4 @@
 use yew::prelude::*;
-use yew_router::prelude::*;
 use crate::api::{ApiClient, ScanRequest};
 use uuid::Uuid;
 
@@ -12,25 +11,46 @@ pub struct Props {
 
 #[function_component(ScanModal)]
 pub fn scan_modal(props: &Props) -> Html {
+    let targets = use_state(|| vec![String::new()]);
     let loading = use_state(|| false);
-    let target = use_state(|| String::new());
     let error = use_state(|| None::<String>);
 
-    // Клонируем всё необходимое из props
     let project_id = props.project_id;
     let scan_type = props.scan_type.clone();
     let on_close = props.on_close.clone();
 
     let on_target_change = {
-        let target = target.clone();
-        Callback::from(move |e: InputEvent| {
+        let targets = targets.clone();
+        Callback::from(move |(index, e): (usize, InputEvent)| {
             let input: web_sys::HtmlInputElement = e.target_unchecked_into();
-            target.set(input.value());
+            let mut new_targets = (*targets).clone();
+            new_targets[index] = input.value();
+            targets.set(new_targets);
+        })
+    };
+
+    let add_target = {
+        let targets = targets.clone();
+        Callback::from(move |_| {
+            let mut new_targets = (*targets).clone();
+            new_targets.push(String::new());
+            targets.set(new_targets);
+        })
+    };
+
+    let remove_target = {
+        let targets = targets.clone();
+        Callback::from(move |index: usize| {
+            let mut new_targets = (*targets).clone();
+            if new_targets.len() > 1 {
+                new_targets.remove(index);
+                targets.set(new_targets);
+            }
         })
     };
 
     let on_submit = {
-        let target = target.clone();
+        let targets = targets.clone();
         let loading = loading.clone();
         let error = error.clone();
         let project_id = project_id;
@@ -39,11 +59,21 @@ pub fn scan_modal(props: &Props) -> Html {
 
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
-            let target = target.to_string();
+            let targets = (*targets).clone();
             let loading = loading.clone();
             let on_close = on_close.clone();
             let scan_type = scan_type.clone();
             let error = error.clone();
+
+            // Filter out empty targets
+            let valid_targets: Vec<String> = targets.into_iter()
+                .filter(|t| !t.trim().is_empty())
+                .collect();
+
+            if valid_targets.is_empty() {
+                error.set(Some("Пожалуйста, укажите хотя бы одну цель".to_string()));
+                return;
+            }
 
             loading.set(true);
             error.set(None);
@@ -51,7 +81,7 @@ pub fn scan_modal(props: &Props) -> Html {
             wasm_bindgen_futures::spawn_local(async move {
                 let request = ScanRequest {
                     r#type: scan_type,
-                    target,
+                    target: valid_targets.join(" "),
                 };
 
                 match ApiClient::get().create_scan(project_id, &request).await {
@@ -96,21 +126,42 @@ pub fn scan_modal(props: &Props) -> Html {
                 </div>
                 <form onsubmit={on_submit}>
                     <div class="form-group">
-                        <label for="target">{
+                        <label>{
                             if props.scan_type == "nmap" {
-                                "Сеть"
+                                "Сети"
                             } else {
-                                "Цель"
+                                "Цели"
                             }
                         }</label>
-                        <input
-                            type="text"
-                            id="target"
-                            value={(*target).clone()}
-                            oninput={on_target_change}
-                            placeholder={placeholder}
-                            required=true
-                        />
+                        {(*targets).iter().enumerate().map(|(index, target)| {
+                            html! {
+                                <div class="target-input-group">
+                                    <input
+                                        type="text"
+                                        value={target.clone()}
+                                        oninput={on_target_change.reform(move |e| (index, e))}
+                                        placeholder={placeholder}
+                                        required=true
+                                    />
+                                    if (*targets).len() > 1 {
+                                        <button
+                                            type="button"
+                                            class="remove-target"
+                                            onclick={remove_target.reform(move |_| index)}
+                                        >
+                                            {"×"}
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        }).collect::<Html>()}
+                        <button
+                            type="button"
+                            class="add-target"
+                            onclick={add_target}
+                        >
+                            {"+ Добавить цель"}
+                        </button>
                     </div>
                     {if let Some(err) = &*error {
                         html! { <div class="error-message">{err}</div> }

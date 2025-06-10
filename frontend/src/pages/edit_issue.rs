@@ -7,7 +7,6 @@ use gloo::timers::callback::Timeout;
 use crate::components::issue_sidebar::IssueSidebar;
 use crate::routes::project::ProjectRoute;
 use yew_router::prelude::*;
-use wasm_bindgen::JsCast;
 
 #[derive(Properties, PartialEq)]
 pub struct EditIssueProps {
@@ -28,7 +27,6 @@ pub fn edit_issue_page(props: &EditIssueProps) -> Html {
     let hosts: UseStateHandle<Vec<Host>> = use_state(Vec::new);
     let selected_hosts: UseStateHandle<Vec<Host>> = use_state(Vec::new);
 
-    // Добавляем обработчик выбора хоста
     let on_host_select = {
         let selected_hosts = selected_hosts.clone();
         Callback::from(move |host: Host| {

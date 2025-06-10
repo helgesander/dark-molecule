@@ -13,8 +13,6 @@ pub fn project_sidebar(props: &ProjectSidebarProps) -> Html {
         ("hosts", "Хосты", "/static/icons/hosts.svg"),
         ("issues", "Issues", "/static/icons/issues.svg"),
         ("reports", "Reports", "/static/icons/reports.svg"),
-        // ("services", "Services", "/static/icons/services.svg"),
-        // ("settings", "Settings", "/static/icons/settings.svg"),
     ];
 
     html! {

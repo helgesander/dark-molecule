@@ -1,6 +1,5 @@
 use yew::prelude::*;
 use web_sys::{HtmlInputElement, File, FormData};
-use wasm_bindgen::JsCast;
 use crate::api::ApiClient;
 
 #[function_component(AdminReportTemplates)]

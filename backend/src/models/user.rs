@@ -82,7 +82,7 @@ impl User {
 
         let mut result: Vec<UserResponse> = Vec::new();
         for user in all_users {
-            result.push(user.to_response(conn)?)
+            result.push(user.to_response()?)
         }
         Ok(result)
     }
@@ -92,7 +92,7 @@ impl User {
         let user = diesel::insert_into(users::table)
             .values(form)
             .get_result::<User>(conn)?;
-        Ok(user.to_response(conn)?)
+        Ok(user.to_response()?)
     }
 
     pub fn update_user(
@@ -115,7 +115,7 @@ impl User {
         })
     }
 
-    pub fn to_response(&self, conn: &mut PgConnection) -> QueryResult<UserResponse> {
+    pub fn to_response(&self) -> QueryResult<UserResponse> {
         Ok(UserResponse {
             id: self.id,
             first_name: self.first_name.clone(),

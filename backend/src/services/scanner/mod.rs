@@ -10,7 +10,6 @@ use crate::db::Pool;
 use crate::utils::config::AppConfig;
 
 pub use traits::VulnerabilityScanner;
-pub use types::ScanStatus;
 use crate::services::scanner::nmap::NmapService;
 use crate::services::scanner::nuclei::NucleiService;
 use crate::services::scanner::types::AnyScanResult;

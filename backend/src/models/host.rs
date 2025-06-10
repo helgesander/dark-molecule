@@ -40,7 +40,6 @@ impl Host {
     ) -> QueryResult<Vec<HostResponse>> {
         use crate::db::schema::hosts::dsl::*;
 
-        // Находим проект
         let project = match projects::table
             .find(id_project)
             .select(Project::as_select())
@@ -51,12 +50,10 @@ impl Host {
             None => return Ok(Vec::new()),
         };
 
-        // Получаем хосты для проекта
         let selected_hosts = Host::belonging_to(&project)
             .select((id, hostname, ip_address))
             .load::<(i32, Option<String>, String)>(conn)?;
 
-        // Преобразуем результаты в HostResponse
         let mut result = Vec::with_capacity(selected_hosts.len());
         for (host_id, host, ip) in selected_hosts {
             result.push(HostResponse {
@@ -85,10 +82,19 @@ impl Host {
             .get_result::<Host>(conn)
     }
 
-    pub fn get_host(conn: &mut PgConnection, id: i32) -> QueryResult<Option<Host>> {
+    pub fn get_host(conn: &mut PgConnection, host_id: i32) -> QueryResult<Option<Host>> {
         use crate::db::schema::hosts::dsl::*;
         hosts
-            .filter(id.eq(id))
+            .filter(id.eq(host_id))
+            .select(Host::as_select())
+            .first(conn)
+            .optional()
+    }
+
+    pub fn get_host_by_ip(conn: &mut PgConnection, ip: String) -> QueryResult<Option<Host>> {
+        use crate::db::schema::hosts::dsl::*;
+        hosts
+            .filter(ip_address.eq(ip))
             .select(Host::as_select())
             .first(conn)
             .optional()

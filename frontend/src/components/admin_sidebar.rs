@@ -10,7 +10,6 @@ pub struct AdminSidebarProps {
 pub fn admin_sidebar(props: &AdminSidebarProps) -> Html {
     let tabs = vec![
         ("users", "Users", "/static/icons/users.svg"),
-        // ("settings", "Settings", "/static/icons/settings.svg"),
         ("teams", "Teams", "/static/icons/team.svg"),
         ("reports_templates", "Reports Templates", "/static/icons/reports.svg"),
     ];
