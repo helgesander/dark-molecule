@@ -207,7 +207,7 @@ impl VulnerabilityScanner for NucleiService {
             .arg("-u")
             .arg(&target.replace(" ", ","))
             .arg("-t")
-            .arg("/home/helgesander/nuclei-templates")
+            .arg("/home/ubuntu/nuclei-templates")
             .arg("-je")
             .arg(&output_file)
             .stdout(Stdio::null())
