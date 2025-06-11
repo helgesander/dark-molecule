@@ -1,12 +1,11 @@
-FROM osomahe/rust-trunk:22.05 as builder
+FROM rust:latest
 
-RUN mkdir /web
-ADD Cargo.toml index.html Trunk.toml /web/
-ADD src /web/src/
-ADD static /web/static/
-WORKDIR /web
+WORKDIR /app
+RUN cargo install trunk && \
+    rustup target add wasm32-unknown-unknown
+
+COPY . .
+
 RUN trunk build --release
 
-FROM nginx:1.21-alpine as runner
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder /web/dist/ /usr/share/nginx/html/
+ENTRYPOINT [ "trunk", "serve", "--release" ]

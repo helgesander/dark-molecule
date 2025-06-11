@@ -19,26 +19,18 @@ COPY . .
 RUN cargo build
 
 FROM debian:bookworm-slim AS runtime
-LABEL authorts="helgesander"
 WORKDIR /app
-COPY --from=builder /app/target/release/backend /usr/local/bin/backend
-COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    libpq-dev \
-    postgresql-client \
-    nmap \
-    && rm -rf /var/lib/apt/lists/* \
 
-# Install golang
-RUN wget https://go.dev/dl/go1.24.2.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.24.2.linux-amd64.tar.gz && \
-    export PATH=$PATH:/usr/local/go/bin && \
-    go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest \
+COPY --from=builder /app/target/release/backend /usr/local/bin/
+COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/
+COPY migrations ./migrations
+COPY diesel.toml .env ./
 
-USER daemon
-COPY entrypoint.sh .
-COPY src/db src/db
-COPY migrations migrations
-COPY diesel.toml .
-ENTRYPOINT ["./entrypoint.sh"]
+# Устанавливаем только runtime-зависимости
+RUN apt-get update && apt-get install -y libpq5 && rm -rf /var/lib/apt/lists/*
+
+# Entrypoint
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
