@@ -1,0 +1,157 @@
+config:
+  target: "http://89.169.172.175:8000"
+  phases:
+    # Начальная фаза - разогрев системы
+    - duration: 30
+      arrivalRate: 2
+      name: "Warm up"
+
+    # Основная фаза - имитация работы 20 пользователей
+    - duration: 100
+      arrivalRate: 15
+      name: "Normal load"
+
+    # Небольшой пик нагрузки
+    - duration: 30
+      arrivalRate: 20
+      name: "Peak load"
+
+    # Возврат к нормальной нагрузке
+    - duration: 50
+      arrivalRate: 15
+      name: "Sustained load"
+
+  processor: "./functions.js"
+  variables:
+    email: "admin@example.com"
+    password: "CICaUbSUPIqM"
+
+  # Настройки для HTTP-клиента
+  http:
+    timeout: 10
+    maxSockets: 50
+    rejectUnauthorized: false
+
+scenarios:
+  - name: "API Flow"
+    weight: 7
+    flow:
+      # Аутентификация
+      - post:
+          url: "/api/auth/"
+          headers:
+            Content-Type: "application/json"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.user.id"
+              as: "userId"
+            - header: "set-cookie"
+              as: "sessionCookie"
+
+      # Получение проектов
+      - get:
+          url: "/api/project/"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+      # Создание команды
+      - post:
+          url: "/api/team/"
+          headers:
+            Content-Type: "application/json"
+            Cookie: "{{ sessionCookie }}"
+          json:
+            name: "Team {{ $randomNumber(1, 1000) }}"
+            description: "Test team"
+            admin_id: "{{ userId }}"
+          capture:
+            - json: "$.id"
+              as: "teamId"
+
+      # Создание проекта
+      - post:
+          url: "/api/project/"
+          headers:
+            Content-Type: "application/json"
+            Cookie: "{{ sessionCookie }}"
+          json:
+            name: "Test Project {{ $randomNumber(1, 1000) }}"
+            scope: "test.com"
+            folder: "pentest"
+            team_id: "{{ teamId }}"
+            start_date: "2025-05-21"
+            end_date: "2025-05-31"
+          capture:
+            - json: "$.id"
+              as: "projectId"
+          expect:
+            - statusCode: 201
+
+      # Получение деталей проекта
+      - get:
+          url: "/api/project/{{ projectId }}"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+      # Создание хоста
+      - post:
+          url: "/api/project/{{ projectId }}/host"
+          headers:
+            Content-Type: "application/json"
+            Cookie: "{{ sessionCookie }}"
+          json:
+            hostname: "{{ $randomNumber(1, 1000) }}.com"
+            ip_address: "{{ $randomNumber(1, 1000) }}"
+          capture:
+            - json: "$.id"
+              as: "hostId"
+
+      # Получение хостов проекта
+      - get:
+          url: "/api/project/{{ projectId }}/hosts"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+      # Получение шаблонов отчетов
+      - get:
+          url: "/api/templates/all"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+      # Получение команд
+      - get:
+          url: "/api/team/"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+  # Отдельный сценарий для тестирования только чтения
+  - name: "Read Only Flow"
+    weight: 3
+    flow:
+      - post:
+          url: "/api/auth/"
+          headers:
+            Content-Type: "application/json"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - header: "set-cookie"
+              as: "sessionCookie"
+
+      - get:
+          url: "/api/project/"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+      - get:
+          url: "/api/team/"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+      - get:
+          url: "/api/templates/all"
+          headers:
+            Cookie: "{{ sessionCookie }}"
